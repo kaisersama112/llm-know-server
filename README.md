@@ -9,7 +9,9 @@ docker exec -it m-postgres psql -U root -d maxkb -c "CREATE EXTENSION vector;"
 ```
 
 ## 项目启动
-
+```bash
+docker build -t llm-know-app:v1.0 -f installer/Dockerfile .
+```
 ### 项目环境配置
 
 1. python==3.11
