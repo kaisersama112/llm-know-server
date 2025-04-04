@@ -41,6 +41,7 @@ from smartdoc.conf import PROJECT_DIR
 from users.models.user import User, password_encrypt, get_user_dynamics_permission
 from django.utils.translation import gettext_lazy as _, gettext, to_locale
 from django.utils.translation import get_language
+
 user_cache = cache.caches['user_cache']
 
 
@@ -185,7 +186,6 @@ class RegisterSerializer(ApiMixin, serializers.Serializer):
 
         return True
 
-
     @transaction.atomic
     def save(self, **kwargs):
         m = User(
@@ -273,7 +273,14 @@ class SwitchLanguageSerializer(serializers.Serializer):
     def switch(self):
         self.is_valid(raise_exception=True)
         language = self.data.get('language')
-        support_language_list = ['zh-CN', 'zh-Hant', 'en-US']
+        support_language_list = [
+            'zh-CN',
+            'zh-Hant',
+            'en-US',
+            "vietnamese",
+            "japanese",
+            "hindi"
+        ]
         if not support_language_list.__contains__(language):
             raise AppApiException(500, _('language only support:') + ','.join(support_language_list))
         QuerySet(User).filter(id=self.data.get('user_id')).update(language=language)
@@ -769,7 +776,6 @@ class UserManageSerializer(serializers.Serializer):
             super().is_valid(raise_exception=True)
             if self.data.get('password') != self.data.get('re_password'):
                 raise ExceptionCodeConstants.PASSWORD_NOT_EQ_RE_PASSWORD.value.to_app_api_exception()
-
 
     @transaction.atomic
     def save(self, instance, with_valid=True):
