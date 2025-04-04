@@ -60,3 +60,14 @@ python main.py dev local_model
 ```bash
 python main.py dev celery
 ```
+
+
+## 数据导出
+```bash
+docker cp 8d984bd0cae9:/opt/maxkb/app/data /root/llm-know-server-v3/exported_data
+```
+## 数据导入
+
+```bash
+docker cp /root/llm-know-server-v3/exported_data/. 97ed576f9dc2:/opt/maxkb/app/data/
+```
