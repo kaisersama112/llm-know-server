@@ -283,8 +283,8 @@ class SwitchLanguageSerializer(serializers.Serializer):
             "japanese", # 日语
             "Urdu", # 乌尔语
             "vietnamese", #越南语
-            "zh_CN", # 中文(简体)
-            "zh_Hant", # 中文(繁体)
+            "zh-CN", # 中文(简体)
+            "zh-Hant", # 中文(繁体)
         ]
         if not support_language_list.__contains__(language):
             raise AppApiException(500, _('language only support:') + ','.join(support_language_list))
