@@ -1,13 +1,13 @@
 <template>
 
   <div class="sidebar p-8">
-    <div v-if="showBreadcrumb">
+    <div class="show-breadcrumb" v-if="showBreadcrumb">
       <AppBreadcrumb/>
     </div>
 
     <el-scrollbar wrap-class="scrollbar-wrapper">
 
-      <el-menu  :default-active="activeMenu" router>
+      <el-menu :default-active="activeMenu" router>
         <sidebar-item
             v-hasPermission="menu.meta?.permission"
             v-for="(menu, index) in subMenuList"
@@ -52,12 +52,20 @@ const activeMenu = computed(() => {
 
 
 <style lang="scss">
+  //@media (max-width: 768px) {
+  //  .breadcrumb-hover-hhhhh{
+  //    display: none;
+  //  }
+  //}
 .sidebar {
   @media (max-width: 768px) {
     //width: 100%;
     height: 100vh;
     padding: 16px;
-
+    width: auto;
+    .show-breadcrumb, .el-scrollbar {
+      width: auto;
+    }
     .el-menu {
       --el-menu-item-height: 48px;
 
