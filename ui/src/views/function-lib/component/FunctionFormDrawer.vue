@@ -1,5 +1,5 @@
 <template>
-  <el-drawer v-model="visible" size="60%" :before-close="close">
+  <el-drawer v-model="visible"  :size="drawerSize"  :before-close="close">
     <template #header>
       <h4>{{ title }}</h4>
     </template>
@@ -189,7 +189,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount,watch,reactive } from 'vue'
+
 import FieldFormDialog from './FieldFormDialog.vue'
 import FunctionDebugDrawer from './FunctionDebugDrawer.vue'
 import type { functionLibData } from '@/api/type/function-lib'
@@ -203,6 +204,7 @@ const props = defineProps({
   title: String
 })
 
+
 const emit = defineEmits(['refresh'])
 const FieldFormDialogRef = ref()
 const FunctionDebugDrawerRef = ref()
@@ -214,7 +216,25 @@ const loading = ref(false)
 const visible = ref(false)
 const showEditor = ref(false)
 const currentIndex = ref<any>(null)
+// 响应式判断移动端
+const isMobile = ref(false)
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 768
+}
 
+// 动态计算抽屉尺寸
+const drawerSize = computed(() => {
+  return isMobile.value ? '100%' : '60%'
+})
+
+// 添加窗口监听
+onMounted(() => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+})
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', checkMobile)
+})
 const form = ref<functionLibData>({
   name: '',
   desc: '',
@@ -361,5 +381,53 @@ defineExpose({
 }
 .function-CodemirrorEditor {
   position: relative;
+}
+/* 移动端专属样式 */
+:deep(.mobile-drawer) {
+  --el-drawer-padding-primary: 12px !important;
+
+  .el-drawer__header {
+    padding: 12px 16px;
+    margin-bottom: 8px;
+
+    h4 {
+      font-size: 16px;
+    }
+  }
+
+  .el-drawer__body {
+    padding: 0 16px 60px;
+
+    .el-form-item__label {
+      font-size: 14px;
+    }
+
+    .el-table {
+      overflow-x: auto;
+      width: 120%;
+    }
+
+    .card__radio .el-col {
+      width: 100% !important;
+      margin-bottom: 8px;
+    }
+  }
+
+  .el-drawer__footer {
+    position: sticky;
+    bottom: 0;
+    background: var(--el-bg-color);
+    padding: 12px 16px;
+    box-shadow: 0 -2px 12px rgba(0,0,0,0.05);
+
+    .el-button {
+      width: 100%;
+      margin-left: 0 !important;
+
+      + .el-button {
+        margin-top: 8px;
+      }
+    }
+  }
 }
 </style>

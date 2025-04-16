@@ -152,6 +152,14 @@ const submit = async (formEl: FormInstance) => {
 defineExpose({ open })
 </script>
 <style lang="scss" scope>
+.el-dialog {
+  // 移动端适配
+  @media screen and (max-width: 768px) {
+    width: 100% !important;
+    max-width: 100vw;
+    margin: 5vh auto !important;
+  }
+}
 .edit-mark-dialog {
   .el-dialog__header.show-close {
     padding-right: 15px;
