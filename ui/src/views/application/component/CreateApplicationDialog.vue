@@ -267,4 +267,34 @@ defineExpose({ open })
     color: var(--el-color-primary);
   }
 }
+.el-dialog {
+  // 移动端适配
+  @media screen and (max-width: 768px) {
+    width: 100% !important;
+    max-width: 100vw;
+    margin: 5vh auto !important;
+  }
+}
+// 在现有样式中添加
+@media screen and (max-width: 768px) {
+
+  .card__radio {
+    .el-text {
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 1; // 限制两行
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.4; // 优化行高
+    }
+
+    // 单选卡片标题适配
+    p.mb-4 {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 90%;
+    }
+  }
+}
 </style>

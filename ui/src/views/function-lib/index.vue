@@ -1,7 +1,7 @@
 <template>
   <div class="function-lib-list-container p-24" style="padding-top: 16px">
     <div class="flex-between mb-16">
-      <h4>{{ $t('views.functionLib.title') }}</h4>
+      <h4 style="white-space: nowrap;padding-right: 10px;">{{ $t('views.functionLib.title') }}</h4>
       <div class="flex-between">
         <el-select
           v-model="selectUserId"

@@ -1,64 +1,64 @@
 <template>
   <div class="dataset-list-container p-24" style="padding-top: 16px">
     <div class="flex-between mb-16">
-      <h4>{{ $t('views.dataset.title') }}</h4>
+      <h4 style="white-space: nowrap;padding-right: 10px;">{{ $t('views.dataset.title') }}</h4>
       <div class="flex-between">
         <el-select
-          v-model="selectUserId"
-          class="mr-12"
-          @change="searchHandle"
-          style="max-width: 240px; width: 150px"
+            v-model="selectUserId"
+            class="mr-12"
+            @change="searchHandle"
+            style="max-width: 240px; width: 150px"
         >
           <el-option
-            v-for="item in userOptions"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"
+              v-for="item in userOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
           />
         </el-select>
         <el-input
-          v-model="searchValue"
-          @change="searchHandle"
-          :placeholder="$t('views.dataset.searchBar.placeholder')"
-          prefix-icon="Search"
-          class="w-240"
-          style="max-width: 240px"
-          clearable
+            v-model="searchValue"
+            @change="searchHandle"
+            :placeholder="$t('views.dataset.searchBar.placeholder')"
+            prefix-icon="Search"
+            class="w-240"
+            style="max-width: 240px"
+            clearable
         />
       </div>
     </div>
     <div v-loading.fullscreen.lock="paginationConfig.current_page === 1 && loading">
       <InfiniteScroll
-        :size="datasetList.length"
-        :total="paginationConfig.total"
-        :page_size="paginationConfig.page_size"
-        v-model:current_page="paginationConfig.current_page"
-        @load="getList"
-        :loading="loading"
+          :size="datasetList.length"
+          :total="paginationConfig.total"
+          :page_size="paginationConfig.page_size"
+          v-model:current_page="paginationConfig.current_page"
+          @load="getList"
+          :loading="loading"
       >
         <el-row :gutter="15">
           <el-col :xs="24" :sm="12" :md="8" :lg="6" :xl="6" class="mb-16">
-            <CardAdd :title="$t('views.dataset.createDataset')" @click="openCreateDialog" />
+            <CardAdd :title="$t('views.dataset.createDataset')" @click="openCreateDialog"/>
           </el-col>
           <template v-for="(item, index) in datasetList" :key="index">
             <el-col :xs="24" :sm="12" :md="8" :lg="6" :xl="6" class="mb-16">
               <CardBox
-                :title="item.name"
-                :description="item.desc"
-                class="cursor"
-                @click="router.push({ path: `/dataset/${item.id}/document` })"
+                  :title="item.name"
+                  :description="item.desc"
+                  class="cursor"
+                  @click="router.push({ path: `/dataset/${item.id}/document` })"
               >
                 <template #icon>
                   <AppAvatar
-                    v-if="item.type === '1'"
-                    class="mr-8 avatar-purple"
-                    shape="square"
-                    :size="32"
+                      v-if="item.type === '1'"
+                      class="mr-8 avatar-purple"
+                      shape="square"
+                      :size="32"
                   >
-                    <img src="@/assets/icon_web.svg" style="width: 58%" alt="" />
+                    <img src="@/assets/icon_web.svg" style="width: 58%" alt=""/>
                   </AppAvatar>
                   <AppAvatar v-else class="mr-8 avatar-blue" shape="square" :size="32">
-                    <img src="@/assets/icon_document.svg" style="width: 58%" alt="" />
+                    <img src="@/assets/icon_document.svg" style="width: 58%" alt=""/>
                   </AppAvatar>
                 </template>
                 <template #subTitle>
@@ -70,14 +70,16 @@
                 </template>
                 <div class="delete-button">
                   <el-tag class="blue-tag" v-if="item.type === '0'" style="height: 22px">{{
-                    $t('views.dataset.general')
-                  }}</el-tag>
+                      $t('views.dataset.general')
+                    }}
+                  </el-tag>
                   <el-tag
-                    class="purple-tag"
-                    v-else-if="item.type === '1'"
-                    type="warning"
-                    style="height: 22px"
-                    >{{ $t('views.dataset.web') }}</el-tag
+                      class="purple-tag"
+                      v-else-if="item.type === '1'"
+                      type="warning"
+                      style="height: 22px"
+                  >{{ $t('views.dataset.web') }}
+                  </el-tag
                   >
                 </div>
 
@@ -85,49 +87,61 @@
                   <div class="footer-content flex-between">
                     <div>
                       <span class="bold">{{ item?.document_count || 0 }}</span>
-                      {{ $t('views.dataset.document_count') }}<el-divider direction="vertical" />
+                      {{ $t('views.dataset.document_count') }}
+                      <el-divider direction="vertical"/>
                       <span class="bold">{{ numberFormat(item?.char_length) || 0 }}</span>
-                      {{ $t('common.character') }}<el-divider direction="vertical" />
+                      {{ $t('common.character') }}
+                      <el-divider direction="vertical"/>
                       <span class="bold">{{ item?.application_mapping_count || 0 }}</span>
                       {{ $t('views.dataset.relatedApp_count') }}
                     </div>
                     <div @click.stop>
                       <el-dropdown trigger="click">
                         <el-button text @click.stop>
-                          <el-icon><MoreFilled /></el-icon>
+                          <el-icon>
+                            <MoreFilled/>
+                          </el-icon>
                         </el-button>
                         <template #dropdown>
                           <el-dropdown-menu>
                             <el-dropdown-item
-                              icon="Refresh"
-                              @click.stop="syncDataset(item)"
-                              v-if="item.type === '1'"
-                              >{{ $t('views.dataset.setting.sync') }}</el-dropdown-item
+                                icon="Refresh"
+                                @click.stop="syncDataset(item)"
+                                v-if="item.type === '1'"
+                            >{{ $t('views.dataset.setting.sync') }}
+                            </el-dropdown-item
                             >
                             <el-dropdown-item @click="reEmbeddingDataset(item)">
                               <AppIcon
-                                iconName="app-document-refresh"
-                                style="font-size: 16px"
+                                  iconName="app-document-refresh"
+                                  style="font-size: 16px"
                               ></AppIcon>
-                              {{ $t('views.dataset.setting.vectorization') }}</el-dropdown-item
+                              {{ $t('views.dataset.setting.vectorization') }}
+                            </el-dropdown-item
                             >
                             <el-dropdown-item
-                              icon="Setting"
-                              @click.stop="router.push({ path: `/dataset/${item.id}/setting` })"
+                                icon="Setting"
+                                @click.stop="router.push({ path: `/dataset/${item.id}/setting` })"
                             >
-                              {{ $t('common.setting') }}</el-dropdown-item
+                              {{ $t('common.setting') }}
+                            </el-dropdown-item
                             >
                             <el-dropdown-item @click.stop="export_dataset(item)">
                               <AppIcon iconName="app-export"></AppIcon
-                              >{{ $t('views.document.setting.export') }} Excel</el-dropdown-item
+                              >
+                              {{ $t('views.document.setting.export') }} Excel
+                            </el-dropdown-item
                             >
                             <el-dropdown-item @click.stop="export_zip_dataset(item)">
                               <AppIcon iconName="app-export"></AppIcon
-                              >{{ $t('views.document.setting.export') }} ZIP</el-dropdown-item
+                              >
+                              {{ $t('views.document.setting.export') }} ZIP
+                            </el-dropdown-item
                             >
                             <el-dropdown-item icon="Delete" @click.stop="deleteDataset(item)">{{
-                              $t('common.delete')
-                            }}</el-dropdown-item>
+                                $t('common.delete')
+                              }}
+                            </el-dropdown-item>
                           </el-dropdown-menu>
                         </template>
                       </el-dropdown>
@@ -140,24 +154,24 @@
         </el-row>
       </InfiniteScroll>
     </div>
-    <SyncWebDialog ref="SyncWebDialogRef" @refresh="refresh" />
-    <CreateDatasetDialog ref="CreateDatasetDialogRef" />
+    <SyncWebDialog ref="SyncWebDialogRef" @refresh="refresh"/>
+    <CreateDatasetDialog ref="CreateDatasetDialogRef"/>
   </div>
 </template>
 <script setup lang="ts">
-import { ref, onMounted, reactive, computed } from 'vue'
+import {ref, onMounted, reactive, computed} from 'vue'
 import SyncWebDialog from '@/views/dataset/component/SyncWebDialog.vue'
 import CreateDatasetDialog from './component/CreateDatasetDialog.vue'
 import datasetApi from '@/api/dataset'
-import { MsgSuccess, MsgConfirm } from '@/utils/message'
-import { useRouter } from 'vue-router'
-import { numberFormat } from '@/utils/utils'
-import { ValidType, ValidCount } from '@/enums/common'
-import { t } from '@/locales'
+import {MsgSuccess, MsgConfirm} from '@/utils/message'
+import {useRouter} from 'vue-router'
+import {numberFormat} from '@/utils/utils'
+import {ValidType, ValidCount} from '@/enums/common'
+import {t} from '@/locales'
 import useStore from '@/stores'
 import applicationApi from '@/api/application'
 
-const { user, common } = useStore()
+const {user, common} = useStore()
 const router = useRouter()
 
 const CreateDatasetDialogRef = ref()
@@ -190,10 +204,11 @@ function openCreateDialog() {
         cancelButtonText: t('common.confirm'),
         confirmButtonText: t('common.professional')
       })
-        .then(() => {
-          window.open('https://LLM-Know.cn/pricing.html', '_blank')
-        })
-        .catch(() => {})
+          .then(() => {
+            window.open('https://LLM-Know.cn/pricing.html', '_blank')
+          })
+          .catch(() => {
+          })
     }
   })
 }
@@ -220,6 +235,7 @@ function searchHandle() {
   datasetList.value = []
   getList()
 }
+
 const export_dataset = (item: any) => {
   datasetApi.exportDataset(item.name, item.id, loading).then((ok) => {
     MsgSuccess(t('common.exportSuccess'))
@@ -233,28 +249,29 @@ const export_zip_dataset = (item: any) => {
 
 function deleteDataset(row: any) {
   MsgConfirm(
-    `${t('views.dataset.delete.confirmTitle')}${row.name} ?`,
-    `${t('views.dataset.delete.confirmMessage1')} ${row.application_mapping_count} ${t('views.dataset.delete.confirmMessage2')}`,
-    {
-      confirmButtonText: t('common.delete'),
-      confirmButtonClass: 'danger'
-    }
+      `${t('views.dataset.delete.confirmTitle')}${row.name} ?`,
+      `${t('views.dataset.delete.confirmMessage1')} ${row.application_mapping_count} ${t('views.dataset.delete.confirmMessage2')}`,
+      {
+        confirmButtonText: t('common.delete'),
+        confirmButtonClass: 'danger'
+      }
   )
-    .then(() => {
-      datasetApi.delDataset(row.id, loading).then(() => {
-        const index = datasetList.value.findIndex((v) => v.id === row.id)
-        datasetList.value.splice(index, 1)
-        MsgSuccess(t('common.deleteSuccess'))
+      .then(() => {
+        datasetApi.delDataset(row.id, loading).then(() => {
+          const index = datasetList.value.findIndex((v) => v.id === row.id)
+          datasetList.value.splice(index, 1)
+          MsgSuccess(t('common.deleteSuccess'))
+        })
       })
-    })
-    .catch(() => {})
+      .catch(() => {
+      })
 }
 
 function getList() {
   const params = {
-    ...(searchValue.value && { name: searchValue.value }),
+    ...(searchValue.value && {name: searchValue.value}),
     ...(selectUserId.value &&
-      selectUserId.value !== 'all' && { select_user_id: selectUserId.value })
+        selectUserId.value !== 'all' && {select_user_id: selectUserId.value})
   }
   datasetApi.getDataset(paginationConfig, params, loading).then((res) => {
     res.data.records.forEach((item: any) => {
@@ -301,11 +318,13 @@ onMounted(() => {
     top: 15px;
     height: auto;
   }
+
   .footer-content {
     .bold {
       color: var(--app-text-color);
     }
   }
+
   :deep(.el-divider__text) {
     background: var(--app-layout-bg-color);
   }

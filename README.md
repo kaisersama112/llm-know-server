@@ -71,3 +71,43 @@ docker cp 8d984bd0cae9:/opt/maxkb/app/data /root/llm-know-server-v3/exported_dat
 ```bash
 docker cp /root/llm-know-server-v3/exported_data/. 97ed576f9dc2:/opt/maxkb/app/data/
 ```
+
+
+# 数据迁移(直接文件覆盖方案（同主版本适用）)
+1. 停止v4容器
+```bash
+docker stop llm-know-container-v4
+```
+2. 备份v4当前数据
+```bash
+# 创建备份目录
+mkdir -p /root/llm_backup/v4
+
+# 备份数据卷
+docker run --rm -v 89f67dc2244595338b26f04a629b390237bc3484964dfff16514edfc436181a2:/data -v /root/llm_backup/v4:/backup alpine tar czf /backup/v4_data_$(date +%Y%m%d).tar.gz -C /data .
+
+```
+3. 执行覆盖操作
+```bash
+# 启动临时同步容器
+docker run -d --rm \
+  --name data_overwriter \
+  -v 06411d3762406e3df46c68878ad872e5bd9f9687d25462ec7fb07eac34759928:/source \
+  -v 89f67dc2244595338b26f04a629b390237bc3484964dfff16514edfc436181a2:/target \
+  alpine tail -f /dev/null
+
+# 清空v4数据卷并复制v3数据
+docker exec data_overwriter sh -c "rm -rf /target/* && cp -a /source/* /target/"
+
+# 验证文件数量
+docker exec data_overwriter sh -c "find /source -type f | wc -l"
+docker exec data_overwriter sh -c "find /target -type f | wc -l"
+```
+4. 重启v4容器
+```bash
+docker start llm-know-container-v4
+```
+# 监控启动日志
+```bash
+docker logs -f llm-know-container-v4 | grep -i 'database system is ready'
+```
