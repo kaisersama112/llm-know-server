@@ -274,17 +274,17 @@ class SwitchLanguageSerializer(serializers.Serializer):
         self.is_valid(raise_exception=True)
         language = self.data.get('language')
         support_language_list = [
-            "Bangla", # 孟加拉语言
-            "brazil", # 巴西语
-            "en_US", # 英语
-            "Farsi", # 波斯语
-            "fr", # 法语
-            "hindi", # 印地语
-            "japanese", # 日语
-            "Urdu", # 乌尔语
-            "vietnamese", #越南语
-            "zh-CN", # 中文(简体)
-            "zh-Hant", # 中文(繁体)
+            "Bangla",  # 孟加拉语言
+            "brazil",  # 巴西语
+            "en_US",  # 英语
+            "Farsi",  # 波斯语
+            "fr",  # 法语
+            "hindi",  # 印地语
+            "japanese",  # 日语
+            "Urdu",  # 乌尔语
+            "vietnamese",  # 越南语
+            "zh-CN",  # 中文(简体)
+            "zh-Hant",  # 中文(繁体)
         ]
         if not support_language_list.__contains__(language):
             raise AppApiException(500, _('language only support:') + ','.join(support_language_list))
@@ -671,19 +671,23 @@ class UserManageSerializer(serializers.Serializer):
 
         username = serializers.CharField(required=True,
                                          error_messages=ErrMessage.char(_("Username")),
-                                         max_length=20,
+                                         max_length=50,
                                          min_length=6,
                                          validators=[
-                                             validators.RegexValidator(regex=re.compile("^.{6,20}$"),
+                                             validators.RegexValidator(regex=re.compile("^.{6,50}$"),
                                                                        message=_(
-                                                                           'Username must be 6-20 characters long'))
+                                                                           'Username must be 6-50 characters long'))
                                          ])
-        password = serializers.CharField(required=True, error_messages=ErrMessage.char(_("Password")),
-                                         validators=[validators.RegexValidator(regex=re.compile(
-                                             "^(?![a-zA-Z]+$)(?![A-Z0-9]+$)(?![A-Z_!@#$%^&*`~.()-+=]+$)(?![a-z0-9]+$)(?![a-z_!@#$%^&*`~()-+=]+$)"
-                                             "(?![0-9_!@#$%^&*`~()-+=]+$)[a-zA-Z0-9_!@#$%^&*`~.()-+=]{6,20}$")
-                                             , message=_(
-                                                 "The password must be 6-20 characters long and must be a combination of letters, numbers, and special characters."))])
+        password = serializers.CharField(
+            required=True,
+            error_messages=ErrMessage.char(_("Password")),
+            validators=[
+                validators.RegexValidator(
+                    regex=re.compile("^.{6,50}$"),  # 仅限制长度
+                    message=_('Password must be 6-50 characters long')
+                )
+            ]
+        )
 
         nick_name = serializers.CharField(required=False, error_messages=ErrMessage.char(_("Name")), max_length=64,
                                           allow_null=True, allow_blank=True)
