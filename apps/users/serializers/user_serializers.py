@@ -276,7 +276,7 @@ class SwitchLanguageSerializer(serializers.Serializer):
         support_language_list = [
             "Bangla",  # 孟加拉语言
             "brazil",  # 巴西语
-            "en_US",  # 英语
+            "en-US",  # 英语
             "Farsi",  # 波斯语
             "fr",  # 法语
             "hindi",  # 印地语
