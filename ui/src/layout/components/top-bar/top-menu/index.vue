@@ -1,17 +1,17 @@
 <template>
   <div class="top-menu-container flex align-center h-full">
     <MenuItem
-      :menu="menu"
-      v-hasPermission="menu.meta?.permission"
-      v-for="(menu, index) in topMenuList"
-      :key="index"
+        :menu="menu"
+        v-hasPermission="menu.meta?.permission"
+        v-for="(menu, index) in topMenuList"
+        :key="index"
     >
     </MenuItem>
   </div>
 </template>
 <script setup lang="ts">
-import { computed } from 'vue'
-import { getChildRouteListByPathAndName } from '@/router/index'
+import {computed} from 'vue'
+import {getChildRouteListByPathAndName} from '@/router/index'
 import MenuItem from './MenuItem.vue'
 
 const topMenuList = computed(() => {
@@ -19,14 +19,17 @@ const topMenuList = computed(() => {
 })
 </script>
 <style lang="scss" scope>
-// TopMenuContainer 组件样式修改
-.top-menu-container {
-  // 原有桌面样式
-  padding: 0 20px;
+@media screen and (max-width: 768px) {
+  .top-menu-container {
 
-  @media screen and (max-width: 768px) {
-    // 移动端样式
-    padding: 0 12px;
+    padding: 0 10px;
+
+
+    .menu-item-container {
+      font-size: 14px;
+      margin-right: 8px;
+    }
+
     overflow-x: auto;
     -webkit-overflow-scrolling: touch; // 流畅滚动
 
@@ -70,6 +73,7 @@ const topMenuList = computed(() => {
   @media (hover: none) {
     &:hover {
       color: inherit;
+
       &.active {
         color: var(--el-color-primary);
       }

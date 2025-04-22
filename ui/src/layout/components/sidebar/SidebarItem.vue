@@ -1,35 +1,36 @@
 <template>
   <div v-if="(!menu.meta || !menu.meta.hidden) && showMenu()" class="sidebar-item">
     <el-sub-menu
-      v-if="menu?.children && menu?.children.length > 0"
-      :index="menu.path"
-      popper-class="sidebar-container-popper"
+        v-if="menu?.children && menu?.children.length > 0"
+        :index="menu.path"
+        popper-class="sidebar-container-popper"
     >
       <template #title>
         <el-icon>
-          <AppIcon v-if="menu.meta && menu.meta.icon" :iconName="menuIcon" class="sidebar-icon" />
+          <AppIcon v-if="menu.meta && menu.meta.icon" :iconName="menuIcon" class="sidebar-icon"/>
         </el-icon>
         <!-- 根据 isMobile 判断是否显示标题 -->
         <span v-if="!isMobile">{{ $t(menu.meta?.title as string) }}</span>
       </template>
       <sidebar-item
-        v-hasPermission="child.meta?.permission"
-        v-for="(child, index) in menu?.children"
-        :key="index"
-        :menu="child"
-        :activeMenu="activeMenu"
+          v-hasPermission="child.meta?.permission"
+          v-for="(child, index) in menu?.children"
+          :key="index"
+          :menu="child"
+          :activeMenu="activeMenu"
       >
       </sidebar-item>
     </el-sub-menu>
     <el-menu-item
-      v-else
-      ref="subMenu"
-      :index="menu.path"
-      popper-class="sidebar-popper"
-      @click="clickHandle(menu)"
+        v-else
+        ref="subMenu"
+        :index="menu.path"
+        popper-class="sidebar-popper"
+        @click="clickHandle(menu)"
     >
       <template #title>
-        <AppIcon v-if="menu.meta && menu.meta.icon" :iconName="menuIcon" class="sidebar-icon" />
+        <AppIcon v-if="menu.meta && menu.meta.icon" :iconName="menuIcon" class="sidebar-icon"/>
+
         <!-- 根据 isMobile 判断是否显示标题 -->
         <span v-if="!isMobile && menu.meta && menu.meta.title">{{ $t(menu.meta?.title as string) }}</span>
       </template>
@@ -38,9 +39,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted } from 'vue'
-import { useRouter, useRoute, type RouteRecordRaw } from 'vue-router'
-import { isWorkFlow } from '@/utils/application'
+import {computed, ref, onMounted, onUnmounted} from 'vue'
+import {useRouter, useRoute, type RouteRecordRaw} from 'vue-router'
+import {isWorkFlow} from '@/utils/application'
 
 const props = defineProps<{
   menu: RouteRecordRaw
@@ -50,7 +51,7 @@ const props = defineProps<{
 const router = useRouter()
 const route = useRoute()
 const {
-  params: { id, type }
+  params: {id, type}
 } = route as any
 
 // 是否为移动端
@@ -81,7 +82,7 @@ function showMenu() {
 
 function clickHandle(item: any) {
   if (isWorkFlow(type) && item.name === 'AppSetting') {
-    router.push({ path: `/application/${id}/workflow` })
+    router.push({path: `/application/${id}/workflow`})
   }
 }
 
