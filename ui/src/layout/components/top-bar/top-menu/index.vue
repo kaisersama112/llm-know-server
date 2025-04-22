@@ -22,7 +22,7 @@ const topMenuList = computed(() => {
 @media screen and (max-width: 768px) {
   .top-menu-container {
 
-    padding: 0 10px;
+    padding: 0 0px;
 
 
     .menu-item-container {
@@ -40,7 +40,9 @@ const topMenuList = computed(() => {
 
     // 菜单项间距调整
     .menu-item-container {
-      margin-right: 12px;
+      margin-right: 5px;
+      margin-left: 5px;
+
       flex-shrink: 0; // 防止挤压变形
     }
   }
@@ -54,7 +56,7 @@ const topMenuList = computed(() => {
   @media screen and (max-width: 768px) {
     // 移动端样式
     font-size: 14px;
-    padding: 8px 12px; // 增大点击区域
+    padding: 8px 8px; // 增大点击区域
     margin-right: 12px;
 
     // 隐藏图标

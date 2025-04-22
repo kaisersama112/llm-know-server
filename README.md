@@ -37,7 +37,7 @@ docker build -t llm-know-app:v1.0 -f installer/Dockerfile .
 
 3. 镜像启动
 
-```bash
+```bash![img.png](img.png)
 docker run -d --name llm-know-container-v2 -p 8080:8080 llm-know-app:v2.0 
 ```
 

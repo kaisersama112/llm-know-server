@@ -10,6 +10,7 @@
       <TopMenu></TopMenu>
     </div>
     <div class="flex-center avatar ">
+
       <Avatar></Avatar>
     </div>
   </div>

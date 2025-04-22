@@ -5,7 +5,7 @@ export default {
   logout: 'Log Out',
   apiKey: 'API Key',
   apiServiceAddress: 'API Service Address',
-  language: 'Language',
+  language: 'Lang',
   isExpire: 'License not uploaded or expired',
   about: {
     title: 'About',
