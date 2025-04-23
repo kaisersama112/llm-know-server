@@ -6,10 +6,13 @@
         <img src="@/assets/user-icon.svg" style="width: 54%" alt=""/>
       </AppAvatar>
       <span v-if="!isMobile" class="ml-8">{{ user.userInfo?.username }}</span>
-      <span v-else>{{ $t('layout.language') }}</span>
-      <el-icon class="el-icon--right">
-        <CaretBottom/>
-      </el-icon>
+      <!--      <span >{{ $t('layout.language') }}</span>-->
+      <el-button v-else>
+        {{ currentLanguage }}
+        <el-icon class="el-icon--right">
+          <arrow-down/>
+        </el-icon>
+      </el-button>
     </div>
 
     <!-- 下拉菜单 -->
@@ -65,27 +68,29 @@
             {{ $t('layout.logout') }}
           </el-dropdown-item>
         </template>
-
-        <!-- 移动端精简菜单 -->
         <template v-else>
-          <el-dropdown-item
-              v-for="(lang, index) in langList"
-              :key="index"
-              @click="changeLang(lang.value)"
-              class="flex-between"
-              style="padding: 12px 11px"
-          >
-            <span :class="lang.value === user.userInfo?.language ? 'primary' : ''">
-              {{ lang.label }}
-            </span>
-            <el-icon
-                v-if="lang.value === user.userInfo?.language"
-                class="primary"
+          <el-dropdown-menu style="width: 180px">
+            <el-dropdown-item
+                v-for="(lang, index) in langList"
+                :key="index"
+                :value="lang.value"
+                @click="changeLang(lang.value)"
+                class="flex-between"
             >
-              <Check/>
-            </el-icon>
-          </el-dropdown-item>
+                  <span :class="lang.value === user.getLanguage() ? 'primary' : ''">{{
+                      lang.label
+                    }}</span>
+
+              <el-icon
+                  :class="lang.value === user.getLanguage() ? 'primary' : ''"
+                  v-if="lang.value === user.getLanguage()"
+              >
+                <Check/>
+              </el-icon>
+            </el-dropdown-item>
+          </el-dropdown-menu>
         </template>
+
       </el-dropdown-menu>
     </template>
   </el-dropdown>
@@ -95,7 +100,7 @@
   <UserPwdDialog ref="UserPwdDialogRef"/>
 </template>
 <script setup lang="ts">
-import {ref, onMounted, onUnmounted} from 'vue'
+import {ref, onMounted, computed, onUnmounted} from 'vue'
 import useStore from '@/stores'
 import {useRouter} from 'vue-router'
 import ResetPassword from './ResetPassword.vue'
@@ -106,6 +111,9 @@ import {ComplexPermission} from '@/utils/permission/type'
 import {langList} from '@/locales/index'
 import {useLocale} from '@/locales/useLocale'
 
+const currentLanguage = computed(() => {
+  return langList.value?.filter((v: any) => v.value === user.getLanguage())?.[0]?.label
+})
 const {user} = useStore()
 const router = useRouter()
 

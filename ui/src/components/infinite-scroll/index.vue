@@ -2,6 +2,7 @@
   <div v-infinite-scroll="loadDataset" :infinite-scroll-disabled="disabledScroll">
     <slot />
   </div>
+
   <div style="padding: 16px 10px">
     <el-divider v-if="size > 0 && loading">
       <el-text type="info"> {{ $t('components.loading') }}...</el-text>

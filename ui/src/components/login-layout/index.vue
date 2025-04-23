@@ -10,27 +10,29 @@
             <template #dropdown>
               <el-dropdown-menu style="width: 180px">
                 <el-dropdown-item
-                  v-for="(lang, index) in langList"
-                  :key="index"
-                  :value="lang.value"
-                  @click="changeLang(lang.value)"
-                  class="flex-between"
+                    v-for="(lang, index) in langList"
+                    :key="index"
+                    :value="lang.value"
+                    @click="changeLang(lang.value)"
+                    class="flex-between"
                 >
-                  <span :class="lang.value === user.getLanguage() ? 'primary' : ''">{{
-                    lang.label
-                  }}</span>
+                  <span :class="lang.value === user.getLanguage() ? 'primary' : ''">
+                    {{ lang.label }}</span>
 
                   <el-icon
-                    :class="lang.value === user.getLanguage() ? 'primary' : ''"
-                    v-if="lang.value === user.getLanguage()"
+                      :class="lang.value === user.getLanguage() ? 'primary' : ''"
+                      v-if="lang.value === user.getLanguage()"
                   >
-                    <Check />
+                    <Check/>
                   </el-icon>
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
             <el-button>
-              {{ currentLanguage }}<el-icon class="el-icon--right"><arrow-down /></el-icon>
+              {{ currentLanguage }}
+              <el-icon class="el-icon--right">
+                <arrow-down/>
+              </el-icon>
             </el-button>
           </el-dropdown>
           <slot></slot>
@@ -40,19 +42,20 @@
   </div>
 </template>
 <script setup lang="ts">
-import { computed } from 'vue'
-import { getThemeImg } from '@/utils/theme'
+import {computed} from 'vue'
+import {getThemeImg} from '@/utils/theme'
 import useStore from '@/stores'
-import { useLocalStorage } from '@vueuse/core'
-import { langList, localeConfigKey, getBrowserLang } from '@/locales/index'
+import {useLocalStorage} from '@vueuse/core'
+import {langList, localeConfigKey, getBrowserLang} from '@/locales/index'
+
 defineProps({
   lang: {
     type: Boolean,
     default: true
   }
 })
-defineOptions({ name: 'LoginLayout' })
-const { user } = useStore()
+defineOptions({name: 'LoginLayout'})
+const {user} = useStore()
 
 const changeLang = (lang: string) => {
   useLocalStorage(localeConfigKey, getBrowserLang()).value = lang
@@ -80,7 +83,7 @@ const loginImage = computed(() => {
     return `${fileURL.value}`
   } else {
     return new URL(`../../assets/theme/${getThemeImg(user.themeInfo?.theme)}.jpg`, import.meta.url)
-      .href
+        .href
   }
 })
 </script>
@@ -95,8 +98,10 @@ const loginImage = computed(() => {
     width: 100%;
     height: 100%;
   }
+
   .right-container {
     position: relative;
+
     .lang {
       position: absolute;
       right: 20px;
