@@ -42,8 +42,9 @@ RUN if [ "$(uname -m)" = "x86_64" ]; then \
 RUN /opt/py3/bin/poetry install --no-interaction
 
 # 编译消息
-RUN export MAXKB_CONFIG_TYPE=ENV && \
-    /opt/py3/bin/python3 /opt/maxkb/app/apps/manage.py compilemessages
+RUN . /opt/py3/bin/activate && \
+    export MAXKB_CONFIG_TYPE=ENV && \
+    python3 /opt/maxkb/app/apps/manage.py compilemessages
 
 FROM python:3.11-slim
 ARG DOCKER_IMAGE_TAG=dev \
