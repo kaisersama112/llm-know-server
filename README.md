@@ -8,7 +8,7 @@ curl -fsSL https://ollama.com/install.sh | sh
 ## 二. 安装pgvector
 
 ```bash
-docker run -d  --name m-postgres -e POSTGRES_USER=root -e POSTGRES_PASSWORD=123456 -p 5433:5432 ankane/pgvector:latest
+docker run -d  --name m-postgres -e POSTGRES_USER=root -e POSTGRES_PASSWORD=123456 -p 5434:5432 ankane/pgvector:latest
 # 创建数据库
 CREATE DATABASE "maxkb";  
 
