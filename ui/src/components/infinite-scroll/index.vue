@@ -1,6 +1,6 @@
 <template>
   <div v-infinite-scroll="loadDataset" :infinite-scroll-disabled="disabledScroll">
-    <slot />
+    <slot/>
   </div>
 
   <div style="padding: 16px 10px">
@@ -13,9 +13,9 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import {ref, computed, watch} from 'vue'
 
-defineOptions({ name: 'InfiniteScroll' })
+defineOptions({name: 'InfiniteScroll'})
 const props = defineProps({
   /**
    * 对象数量
@@ -49,17 +49,17 @@ const emit = defineEmits(['update:current_page', 'load'])
 const current = ref(props.current_page)
 
 watch(
-  () => props.current_page,
-  (val) => {
-    if (val === 1) {
-      current.value = 1
+    () => props.current_page,
+    (val) => {
+      if (val === 1) {
+        current.value = 1
+      }
     }
-  }
 )
 
 const noMore = computed(
-  () =>
-    props.size > 0 && props.size === props.total && props.total > props.page_size && !props.loading
+    () =>
+        props.size > 0 && props.size === props.total && props.total > props.page_size && !props.loading
 )
 const disabledScroll = computed(() => props.size > 0 && (props.loading || noMore.value))
 
