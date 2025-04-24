@@ -1,13 +1,13 @@
 <template>
   <div class="ai-chat__operate p-16-24">
-    <slot name="operateBefore" />
+    <slot name="operateBefore"/>
 
     <div class="operate-textarea">
       <el-scrollbar max-height="136">
         <div
-          class="p-8-12"
-          v-loading="localLoading"
-          v-if="
+            class="p-8-12"
+            v-loading="localLoading"
+            v-if="
             uploadDocumentList.length ||
             uploadImageList.length ||
             uploadAudioList.length ||
@@ -16,35 +16,35 @@
         >
           <el-row :gutter="10">
             <el-col
-              v-for="(item, index) in uploadDocumentList"
-              :key="index"
-              :xs="24"
-              :sm="props.type === 'debug-ai-chat' ? 24 : 12"
-              :md="props.type === 'debug-ai-chat' ? 24 : 12"
-              :lg="props.type === 'debug-ai-chat' ? 24 : 12"
-              :xl="props.type === 'debug-ai-chat' ? 24 : 12"
-              class="mb-8"
+                v-for="(item, index) in uploadDocumentList"
+                :key="index"
+                :xs="24"
+                :sm="props.type === 'debug-ai-chat' ? 24 : 12"
+                :md="props.type === 'debug-ai-chat' ? 24 : 12"
+                :lg="props.type === 'debug-ai-chat' ? 24 : 12"
+                :xl="props.type === 'debug-ai-chat' ? 24 : 12"
+                class="mb-8"
             >
               <el-card
-                shadow="never"
-                style="--el-card-padding: 8px; max-width: 100%"
-                class="file cursor"
+                  shadow="never"
+                  style="--el-card-padding: 8px; max-width: 100%"
+                  class="file cursor"
               >
                 <div
-                  class="flex align-center"
-                  @mouseenter.stop="mouseenter(item)"
-                  @mouseleave.stop="mouseleave()"
+                    class="flex align-center"
+                    @mouseenter.stop="mouseenter(item)"
+                    @mouseleave.stop="mouseleave()"
                 >
                   <div
-                    @click="deleteFile(index, 'document')"
-                    class="delete-icon color-secondary"
-                    v-if="showDelete === item.url"
+                      @click="deleteFile(index, 'document')"
+                      class="delete-icon color-secondary"
+                      v-if="showDelete === item.url"
                   >
                     <el-icon>
-                      <CircleCloseFilled />
+                      <CircleCloseFilled/>
                     </el-icon>
                   </div>
-                  <img :src="getImgUrl(item && item?.name)" alt="" width="24" />
+                  <img :src="getImgUrl(item && item?.name)" alt="" width="24"/>
                   <div class="ml-4 ellipsis-1" :title="item && item?.name">
                     {{ item && item?.name }}
                   </div>
@@ -53,31 +53,31 @@
             </el-col>
 
             <el-col
-              :xs="24"
-              :sm="props.type === 'debug-ai-chat' ? 24 : 12"
-              :md="props.type === 'debug-ai-chat' ? 24 : 12"
-              :lg="props.type === 'debug-ai-chat' ? 24 : 12"
-              :xl="props.type === 'debug-ai-chat' ? 24 : 12"
-              class="mb-8"
-              v-for="(item, index) in uploadAudioList"
-              :key="index"
+                :xs="24"
+                :sm="props.type === 'debug-ai-chat' ? 24 : 12"
+                :md="props.type === 'debug-ai-chat' ? 24 : 12"
+                :lg="props.type === 'debug-ai-chat' ? 24 : 12"
+                :xl="props.type === 'debug-ai-chat' ? 24 : 12"
+                class="mb-8"
+                v-for="(item, index) in uploadAudioList"
+                :key="index"
             >
               <el-card shadow="never" style="--el-card-padding: 8px" class="file cursor">
                 <div
-                  class="flex align-center"
-                  @mouseenter.stop="mouseenter(item)"
-                  @mouseleave.stop="mouseleave()"
+                    class="flex align-center"
+                    @mouseenter.stop="mouseenter(item)"
+                    @mouseleave.stop="mouseleave()"
                 >
                   <div
-                    @click="deleteFile(index, 'audio')"
-                    class="delete-icon color-secondary"
-                    v-if="showDelete === item.url"
+                      @click="deleteFile(index, 'audio')"
+                      class="delete-icon color-secondary"
+                      v-if="showDelete === item.url"
                   >
                     <el-icon>
-                      <CircleCloseFilled />
+                      <CircleCloseFilled/>
                     </el-icon>
                   </div>
-                  <img :src="getImgUrl(item && item?.name)" alt="" width="24" />
+                  <img :src="getImgUrl(item && item?.name)" alt="" width="24"/>
                   <div class="ml-4 ellipsis-1" :title="item && item?.name">
                     {{ item && item?.name }}
                   </div>
@@ -88,26 +88,26 @@
           <el-space wrap>
             <template v-for="(item, index) in uploadImageList" :key="index">
               <div
-                class="file cursor border border-r-4"
-                v-if="item.url"
-                @mouseenter.stop="mouseenter(item)"
-                @mouseleave.stop="mouseleave()"
+                  class="file cursor border border-r-4"
+                  v-if="item.url"
+                  @mouseenter.stop="mouseenter(item)"
+                  @mouseleave.stop="mouseleave()"
               >
                 <div
-                  @click="deleteFile(index, 'image')"
-                  class="delete-icon color-secondary"
-                  v-if="showDelete === item.url"
+                    @click="deleteFile(index, 'image')"
+                    class="delete-icon color-secondary"
+                    v-if="showDelete === item.url"
                 >
                   <el-icon>
-                    <CircleCloseFilled />
+                    <CircleCloseFilled/>
                   </el-icon>
                 </div>
                 <el-image
-                  :src="item.url"
-                  alt=""
-                  fit="cover"
-                  style="width: 40px; height: 40px; display: block"
-                  class="border-r-4"
+                    :src="item.url"
+                    alt=""
+                    fit="cover"
+                    style="width: 40px; height: 40px; display: block"
+                    class="border-r-4"
                 />
               </div>
             </template>
@@ -116,76 +116,87 @@
       </el-scrollbar>
       <div class="flex">
         <el-input
-          ref="quickInputRef"
-          v-model="inputValue"
-          :placeholder="
+            ref="quickInputRef"
+            v-model="inputValue"
+            :placeholder="
             startRecorderTime
               ? `${$t('chat.inputPlaceholder.speaking')}...`
               : recorderLoading
                 ? `${$t('chat.inputPlaceholder.recorderLoading')}...`
                 : $t('chat.inputPlaceholder.default')
           "
-          :autosize="{ minRows: 1, maxRows: isMobile ? 4 : 10 }"
-          type="textarea"
-          :maxlength="100000"
-          @keydown.enter="sendChatHandle($event)"
+            :autosize="{ minRows: 1, maxRows: isMobile ? 4 : 10 }"
+            type="textarea"
+            :maxlength="100000"
+            @keydown.enter="sendChatHandle($event)"
         />
 
         <div class="operate flex align-center">
+          <!-- 文件上传 -->
           <span v-if="props.applicationDetails.file_upload_enable" class="flex align-center">
             <el-upload
-              action="#"
-              multiple
-              :auto-upload="false"
-              :show-file-list="false"
-              :accept="getAcceptList()"
-              :on-change="(file: any, fileList: any) => uploadFile(file, fileList)"
+                action="#"
+                multiple
+                :auto-upload="false"
+                :show-file-list="false"
+                :accept="getAcceptList()"
+                :on-change="(file: any, fileList: any) => uploadFile(file, fileList)"
             >
               <el-tooltip effect="dark" placement="top" popper-class="upload-tooltip-width">
                 <template #content>
                   <div class="break-all pre-wrap">
-                    {{ $t('chat.uploadFile.label') }}：{{ $t('chat.uploadFile.most')
-                    }}{{ props.applicationDetails.file_upload_setting.maxFiles
+                    {{ $t('chat.uploadFile.label') }}：{{
+                      $t('chat.uploadFile.most')
+                    }}{{
+                      props.applicationDetails.file_upload_setting.maxFiles
                     }}{{ $t('chat.uploadFile.limit') }}
-                    {{ props.applicationDetails.file_upload_setting.fileLimit }}MB<br />{{
+                    {{ props.applicationDetails.file_upload_setting.fileLimit }}MB<br/>{{
                       $t('chat.uploadFile.fileType')
                     }}：{{ getAcceptList().replace(/\./g, '').replace(/,/g, '、').toUpperCase() }}
                   </div>
                 </template>
                 <el-button text :disabled="checkMaxFilesLimit()" class="mt-4">
-                  <el-icon><Paperclip /></el-icon>
+                  <el-icon><Paperclip/></el-icon>
                 </el-button>
               </el-tooltip>
             </el-upload>
-            <el-divider direction="vertical" />
+            <el-divider direction="vertical"/>
           </span>
+          <!-- 语音输入 -->
           <span v-if="props.applicationDetails.stt_model_enable" class="flex align-center">
             <el-button text @click="startRecording" v-if="mediaRecorderStatus">
               <el-icon>
-                <Microphone />
+                <Microphone/>
               </el-icon>
             </el-button>
 
             <div v-else class="operate flex align-center">
               <el-text type="info"
-                >00:{{ recorderTime < 10 ? `0${recorderTime}` : recorderTime }}</el-text
+              >00:{{ recorderTime < 10 ? `0${recorderTime}` : recorderTime }}</el-text
               >
               <el-button text type="primary" @click="stopRecording" :loading="recorderLoading">
                 <AppIcon iconName="app-video-stop"></AppIcon>
               </el-button>
             </div>
-            <el-divider v-if="!startRecorderTime && !recorderLoading" direction="vertical" />
+            <el-divider v-if="!startRecorderTime && !recorderLoading" direction="vertical"/>
           </span>
 
+          <!-- 语音通话按钮 -->
+          <el-button text class="sent-button" @click="sendChatHandle">
+            <el-icon color="#409EFF">
+              <Iphone/>
+            </el-icon>
+          </el-button>
+          <!-- 发送按钮 -->
           <el-button
-            v-if="!startRecorderTime && !recorderLoading"
-            text
-            class="sent-button"
-            :disabled="isDisabledChart || loading"
-            @click="sendChatHandle"
+              v-if="!startRecorderTime && !recorderLoading"
+              text
+              class="sent-button"
+              :disabled="isDisabledChart || loading"
+              @click="sendChatHandle"
           >
-            <img v-show="isDisabledChart || loading" src="@/assets/icon_send.svg" alt="" />
-            <SendIcon v-show="!isDisabledChart && !loading" />
+            <img v-show="isDisabledChart || loading" src="@/assets/icon_send_colorful.svg" alt=""/>
+            <SendIcon v-show="!isDisabledChart && !loading"/>
           </el-button>
         </div>
       </div>
@@ -200,39 +211,40 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue'
+import {ref, computed, onMounted, nextTick} from 'vue'
 import Recorder from 'recorder-core'
 import applicationApi from '@/api/application'
-import { MsgAlert } from '@/utils/message'
-import { type chatType } from '@/api/type/application'
-import { useRoute, useRouter } from 'vue-router'
-import { getImgUrl } from '@/utils/utils'
+import {MsgAlert} from '@/utils/message'
+import {type chatType} from '@/api/type/application'
+import {useRoute, useRouter} from 'vue-router'
+import {getImgUrl} from '@/utils/utils'
 import bus from '@/bus'
 import 'recorder-core/src/engine/mp3'
 import 'recorder-core/src/engine/mp3-engine'
-import { MsgWarning } from '@/utils/message'
-import { t } from '@/locales'
+import {MsgWarning} from '@/utils/message'
+import {t} from '@/locales'
+
 const router = useRouter()
 const route = useRoute()
 const {
-  query: { mode, question }
+  query: {mode, question}
 } = route as any
 const quickInputRef = ref()
 const props = withDefaults(
-  defineProps<{
-    applicationDetails: any
-    type: 'log' | 'ai-chat' | 'debug-ai-chat'
-    loading: boolean
-    isMobile: boolean
-    appId?: string
-    chatId: string
-    sendMessage: (question: string, other_params_data?: any, chat?: chatType) => void
-    openChatId: () => Promise<string>
-  }>(),
-  {
-    applicationDetails: () => ({}),
-    available: true
-  }
+    defineProps<{
+      applicationDetails: any
+      type: 'log' | 'ai-chat' | 'debug-ai-chat'
+      loading: boolean
+      isMobile: boolean
+      appId?: string
+      chatId: string
+      sendMessage: (question: string, other_params_data?: any, chat?: chatType) => void
+      openChatId: () => Promise<string>
+    }>(),
+    {
+      applicationDetails: () => ({}),
+      available: true
+    }
 )
 const emit = defineEmits(['update:chatId', 'update:loading'])
 const chartOpenId = ref<string>()
@@ -263,7 +275,7 @@ const videoExtensions = ['mp4', 'avi', 'mov', 'mkv', 'flv']
 const audioExtensions = ['mp3', 'wav', 'ogg', 'aac', 'm4a']
 
 const getAcceptList = () => {
-  const { image, document, audio, video } = props.applicationDetails.file_upload_setting
+  const {image, document, audio, video} = props.applicationDetails.file_upload_setting
   let accepts: any = []
   if (image) {
     accepts = [...imageExtensions]
@@ -286,8 +298,8 @@ const getAcceptList = () => {
 
 const checkMaxFilesLimit = () => {
   return (
-    props.applicationDetails.file_upload_setting.maxFiles <=
-    uploadImageList.value.length +
+      props.applicationDetails.file_upload_setting.maxFiles <=
+      uploadImageList.value.length +
       uploadDocumentList.value.length +
       uploadAudioList.value.length +
       uploadVideoList.value.length
@@ -295,13 +307,13 @@ const checkMaxFilesLimit = () => {
 }
 
 const uploadFile = async (file: any, fileList: any) => {
-  const { maxFiles, fileLimit } = props.applicationDetails.file_upload_setting
+  const {maxFiles, fileLimit} = props.applicationDetails.file_upload_setting
   // 单次上传文件数量限制
   const file_limit_once =
-    uploadImageList.value.length +
-    uploadDocumentList.value.length +
-    uploadAudioList.value.length +
-    uploadVideoList.value.length
+      uploadImageList.value.length +
+      uploadDocumentList.value.length +
+      uploadAudioList.value.length +
+      uploadVideoList.value.length
   if (file_limit_once >= maxFiles) {
     MsgWarning(t('chat.uploadFile.limitMessage1') + maxFiles + t('chat.uploadFile.limitMessage2'))
     fileList.splice(0, fileList.length)
@@ -341,46 +353,46 @@ const uploadFile = async (file: any, fileList: any) => {
   }
 
   applicationApi
-    .uploadFile(
-      props.applicationDetails.id as string,
-      chatId_context.value as string,
-      formData,
-      localLoading
-    )
-    .then((response) => {
-      fileList.splice(0, fileList.length)
-      uploadImageList.value.forEach((file: any) => {
-        const f = response.data.filter((f: any) => f.name === file.name)
-        if (f.length > 0) {
-          file.url = f[0].url
-          file.file_id = f[0].file_id
+      .uploadFile(
+          props.applicationDetails.id as string,
+          chatId_context.value as string,
+          formData,
+          localLoading
+      )
+      .then((response) => {
+        fileList.splice(0, fileList.length)
+        uploadImageList.value.forEach((file: any) => {
+          const f = response.data.filter((f: any) => f.name === file.name)
+          if (f.length > 0) {
+            file.url = f[0].url
+            file.file_id = f[0].file_id
+          }
+        })
+        uploadDocumentList.value.forEach((file: any) => {
+          const f = response.data.filter((f: any) => f.name === file.name)
+          if (f.length > 0) {
+            file.url = f[0].url
+            file.file_id = f[0].file_id
+          }
+        })
+        uploadAudioList.value.forEach((file: any) => {
+          const f = response.data.filter((f: any) => f.name === file.name)
+          if (f.length > 0) {
+            file.url = f[0].url
+            file.file_id = f[0].file_id
+          }
+        })
+        uploadVideoList.value.forEach((file: any) => {
+          const f = response.data.filter((f: any) => f.name === file.name)
+          if (f.length > 0) {
+            file.url = f[0].url
+            file.file_id = f[0].file_id
+          }
+        })
+        if (!inputValue.value && uploadImageList.value.length > 0) {
+          inputValue.value = t('chat.uploadFile.imageMessage')
         }
       })
-      uploadDocumentList.value.forEach((file: any) => {
-        const f = response.data.filter((f: any) => f.name === file.name)
-        if (f.length > 0) {
-          file.url = f[0].url
-          file.file_id = f[0].file_id
-        }
-      })
-      uploadAudioList.value.forEach((file: any) => {
-        const f = response.data.filter((f: any) => f.name === file.name)
-        if (f.length > 0) {
-          file.url = f[0].url
-          file.file_id = f[0].file_id
-        }
-      })
-      uploadVideoList.value.forEach((file: any) => {
-        const f = response.data.filter((f: any) => f.name === file.name)
-        if (f.length > 0) {
-          file.url = f[0].url
-          file.file_id = f[0].file_id
-        }
-      })
-      if (!inputValue.value && uploadImageList.value.length > 0) {
-        inputValue.value = t('chat.uploadFile.imageMessage')
-      }
-    })
 }
 const recorderTime = ref(0)
 const startRecorderTime = ref(false)
@@ -396,14 +408,15 @@ const showDelete = ref('')
 // 定义响应式引用
 const mediaRecorder = ref<any>(null)
 const isDisabledChart = computed(
-  () => !(inputValue.value.trim() && (props.appId || props.applicationDetails?.name))
+    () => !(inputValue.value.trim() && (props.appId || props.applicationDetails?.name))
 )
 
 // 开始录音
 const startRecording = async () => {
   try {
     // 取消录音控制台日志
-    Recorder.CLog = function () {}
+    Recorder.CLog = function () {
+    }
     mediaRecorderStatus.value = false
     handleTimeChange()
     mediaRecorder.value = new Recorder({
@@ -413,32 +426,32 @@ const startRecording = async () => {
     })
 
     mediaRecorder.value.open(
-      () => {
-        mediaRecorder.value.start()
-      },
-      (err: any) => {
-        MsgAlert(
-          t('common.tip'),
-          `${t('chat.tip.recorderTip')}
+        () => {
+          mediaRecorder.value.start()
+        },
+        (err: any) => {
+          MsgAlert(
+              t('common.tip'),
+              `${t('chat.tip.recorderTip')}
     <img src="${new URL(`@/assets/tipIMG.jpg`, import.meta.url).href}" style="width: 100%;" />`,
-          {
-            confirmButtonText: t('chat.tip.confirm'),
-            dangerouslyUseHTMLString: true,
-            customClass: 'record-tip-confirm'
-          }
-        )
-      }
+              {
+                confirmButtonText: t('chat.tip.confirm'),
+                dangerouslyUseHTMLString: true,
+                customClass: 'record-tip-confirm'
+              }
+          )
+        }
     )
   } catch (error) {
     MsgAlert(
-      t('common.tip'),
-      `${t('chat.tip.recorderTip')}
+        t('common.tip'),
+        `${t('chat.tip.recorderTip')}
     <img src="${new URL(`@/assets/tipIMG.jpg`, import.meta.url).href}" style="width: 100%;" />`,
-      {
-        confirmButtonText: t('chat.tip.confirm'),
-        dangerouslyUseHTMLString: true,
-        customClass: 'record-tip-confirm'
-      }
+        {
+          confirmButtonText: t('chat.tip.confirm'),
+          dangerouslyUseHTMLString: true,
+          customClass: 'record-tip-confirm'
+        }
     )
   }
 }
@@ -450,17 +463,17 @@ const stopRecording = () => {
   if (mediaRecorder.value) {
     mediaRecorderStatus.value = true
     mediaRecorder.value.stop(
-      (blob: Blob, duration: number) => {
-        // 测试blob是否能正常播放
-        //  const link = document.createElement('a')
-        //  link.href = window.URL.createObjectURL(blob)
-        //  link.download = 'abc.mp3'
-        //  link.click()
-        uploadRecording(blob) // 上传录音文件
-      },
-      (err: any) => {
-        console.error(`${t('chat.tip.recorderError')}:`, err)
-      }
+        (blob: Blob, duration: number) => {
+          // 测试blob是否能正常播放
+          //  const link = document.createElement('a')
+          //  link.href = window.URL.createObjectURL(blob)
+          //  link.download = 'abc.mp3'
+          //  link.click()
+          uploadRecording(blob) // 上传录音文件
+        },
+        (err: any) => {
+          console.error(`${t('chat.tip.recorderError')}:`, err)
+        }
     )
   }
 }
@@ -472,22 +485,22 @@ const uploadRecording = async (audioBlob: Blob) => {
     const formData = new FormData()
     formData.append('file', audioBlob, 'recording.mp3')
     applicationApi
-      .postSpeechToText(props.applicationDetails.id as string, formData, localLoading)
-      .then((response) => {
-        recorderLoading.value = false
-        mediaRecorder.value.close()
-        inputValue.value = typeof response.data === 'string' ? response.data : ''
-        // 自动发送
-        if (props.applicationDetails.stt_autosend) {
-          nextTick(() => {
-            autoSendMessage()
-          })
-        }
-      })
-      .catch((error) => {
-        recorderLoading.value = false
-        console.error(`${t('chat.uploadFile.errorMessage')}:`, error)
-      })
+        .postSpeechToText(props.applicationDetails.id as string, formData, localLoading)
+        .then((response) => {
+          recorderLoading.value = false
+          mediaRecorder.value.close()
+          inputValue.value = typeof response.data === 'string' ? response.data : ''
+          // 自动发送
+          if (props.applicationDetails.stt_autosend) {
+            nextTick(() => {
+              autoSendMessage()
+            })
+          }
+        })
+        .catch((error) => {
+          recorderLoading.value = false
+          console.error(`${t('chat.uploadFile.errorMessage')}:`, error)
+        })
   } catch (error) {
     recorderLoading.value = false
     console.error(`${t('chat.uploadFile.errorMessage')}:`, error)
@@ -571,17 +584,17 @@ onMounted(() => {
       // 获取当前路由信息
       const route = router.currentRoute.value
       // 复制query对象
-      const query = { ...route.query }
+      const query = {...route.query}
       // 删除特定的参数
       delete query.question
       const newRoute =
-        Object.entries(query)?.length > 0
-          ? route.path +
-            '?' +
-            Object.entries(query)
-              .map(([key, value]) => `${key}=${value}`)
-              .join('&')
-          : route.path
+          Object.entries(query)?.length > 0
+              ? route.path +
+              '?' +
+              Object.entries(query)
+                  .map(([key, value]) => `${key}=${value}`)
+                  .join('&')
+              : route.path
 
       history.pushState(null, '', '/ui' + newRoute)
     }, 100)

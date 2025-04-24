@@ -194,6 +194,7 @@
           :autosize="{ minRows: 1, maxRows: 8 }"
           @keydown.enter="sendChatHandle($event)"
         />
+
         <div class="operate">
           <el-button
             text
@@ -208,6 +209,7 @@
               alt=""
             />
           </el-button>
+
         </div>
       </div>
     </div>

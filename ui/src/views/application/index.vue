@@ -258,7 +258,16 @@ import {t} from '@/locales'
 import useStore from '@/stores'
 import assetsVideoSrc from '@/assets/demo-vedio.mp4'
 import assetsVideoImage from '@/assets/demo-vedio-image.png'
-
+import step1Image from '@/assets/step1-create.png'
+import step2Image from '@/assets/step2-upload.png'
+import step3Image from '@/assets/step3-newapp.png'
+import step4Image from '@/assets/step4-config.png'
+import step5Image from '@/assets/step5-use.png'
+// const step1Image = new URL('@/assets/step1-create.png', import.meta.url).href
+// const step2Image = new URL('@/assets/step2-upload.png', import.meta.url).href
+// const step3Image = new URL('@/assets/step3-newapp.png', import.meta.url).href
+// const step4Image = new URL('@/assets/step4-config.png', import.meta.url).href
+// const step5Image = new URL('@/assets/step5-use.png', import.meta.url).href
 const elUploadRef = ref<any>()
 const {application, user, common} = useStore()
 const router = useRouter()
@@ -297,31 +306,31 @@ const tutorialSteps = [
     title: 'Create Knowledge Base',
     description: 'Start by creating a new knowledge base to store your data and documents.',
     icon: 'MagicStick',
-    image: 'src/assets/step1-create.png'
+    image: step1Image
   },
   {
     title: 'Upload Documents',
     description: 'Upload relevant files and documents to populate your knowledge base.',
     icon: 'UploadFilled',
-    image: 'src/assets/step2-upload.png'
+    image: step2Image
   },
   {
     title: 'Create New Application',
     description: 'Build a new application that will utilize the knowledge base you created.',
     icon: 'CirclePlusFilled',
-    image: 'src/assets/step3-newapp.png'
+    image: step3Image
   },
   {
     title: 'Configure Application',
     description: 'Set up the application by configuring its settings and parameters.',
     icon: 'Setting',
-    image: 'src/assets/step4-config.png'
+    image: step4Image
   },
   {
     title: 'Start Using',
     description: 'Launch the application and start using it to achieve your goals.',
     icon: 'VideoPlay',
-    image: 'src/assets/step5-use.png'
+    image: step5Image
   }
 ];
 

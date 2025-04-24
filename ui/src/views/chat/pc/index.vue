@@ -151,8 +151,9 @@
         </div>
       </div>
       <div class="collapse">
+
         <el-button @click="isCollapse = !isCollapse">
-          <el-icon> <component :is="isCollapse ? 'Fold' : 'Expand'" /></el-icon>
+          <el-icon color="#409EFF" > <component :is="isCollapse ? 'Fold' : 'Expand'" /></el-icon>
         </el-button>
       </div>
     </div>
