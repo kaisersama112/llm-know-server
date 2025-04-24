@@ -9,6 +9,8 @@ curl -fsSL https://ollama.com/install.sh | sh
 
 ```bash
 docker run -d  --name m-postgres -e POSTGRES_USER=root -e POSTGRES_PASSWORD=123456 -p 5434:5432 ankane/pgvector:latest
+
+docker run -d  --name m-postgres --network maxkb-network -e POSTGRES_USER=root -e POSTGRES_PASSWORD=123456 -p 5434:5432 ankane/pgvector:latest
 # 创建数据库
 CREATE DATABASE "maxkb";  
 
@@ -39,6 +41,8 @@ docker build -t llm-know-app:v1.0 -f installer/Dockerfile .
 
 ```bash![img.png](img.png)
 docker run -d --name llm-know-container-v2 -p 8080:8080 -p 5432:5432 llm-know-app:v2.0 
+
+docker run -d --name llm-know-container-v7 --network maxkb-network -p 8080:8080 -p 5432:5432 llm-know-app:v7.0
 ```
 
 ### 四. 项目环境配置
