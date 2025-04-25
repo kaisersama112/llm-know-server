@@ -195,6 +195,7 @@
             controls
             preload="auto"
             :poster="assetsVideoImage"
+            playsinline
         >
           <source :src="assetsVideoSrc" type="video/mp4"/>
         </video>
@@ -225,12 +226,19 @@
                     {{ t(step.description) }}
                   </p>
                   <!-- 添加示例图片 -->
-                  <img
+                  <el-image
                       v-if="step.image"
                       :src="step.image"
                       class="step-image"
-                      alt="step example"
-                  />
+                      :preview-src-list="[step.image]"
+                      :initial-index="0"
+                      fit="contain"
+                      hide-on-click-modal
+                  >
+                    <template #error>
+                      <div class="image-error">加载失败</div>
+                    </template>
+                  </el-image>
                 </div>
               </template>
             </el-step>
@@ -782,7 +790,6 @@ onMounted(() => {
       }
     }
   }
-
-
 }
+
 </style>
