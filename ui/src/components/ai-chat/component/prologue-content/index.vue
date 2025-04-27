@@ -2,25 +2,26 @@
   <!-- 开场白组件 -->
   <div class="item-content mb-16">
     <div class="avatar" v-if="prologue">
-      <img v-if="application.avatar" :src="application.avatar" height="32px" width="32px" />
-      <LogoIcon v-else height="32px" width="32px" />
+      <img v-if="application.avatar" :src="application.avatar" height="32px" width="32px"/>
+      <LogoIcon v-else height="32px" width="32px"/>
     </div>
     <div class="content" v-if="prologue">
-      <el-card shadow="always" class="border-r-8" style="--el-card-padding: 10px 16px 12px">
+      <el-card shadow="always" class="border-r-8 card-update" style="--el-card-padding: 10px 16px 12px">
         <MdRenderer
-          :source="prologue"
-          :send-message="sendMessage"
-          reasoning_content=""
+            :source="prologue"
+            :send-message="sendMessage"
+            reasoning_content=""
         ></MdRenderer>
       </el-card>
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import { type chatType } from '@/api/type/application'
-import { computed } from 'vue'
+import {type chatType} from '@/api/type/application'
+import {computed} from 'vue'
 import MdRenderer from '@/components/markdown/MdRenderer.vue'
-import { t } from '@/locales'
+import {t} from '@/locales'
+
 const props = defineProps<{
   application: any
   available: boolean
@@ -54,4 +55,14 @@ const prologue = computed(() => {
   return ''
 })
 </script>
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.item-content {
+  .content {
+    .el-card{
+      box-shadow:none;
+      border: none;
+      background: #FFFFFF;
+    }
+  }
+}
+</style>

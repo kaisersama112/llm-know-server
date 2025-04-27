@@ -182,11 +182,11 @@
           </span>
 
           <!-- 语音通话按钮 -->
-<!--          <el-button text class="sent-button" @click="sendChatHandle">-->
-<!--            <el-icon color="#409EFF">-->
-<!--              <Iphone/>-->
-<!--            </el-icon>-->
-<!--          </el-button>-->
+          <!--          <el-button text class="sent-button" @click="sendChatHandle">-->
+          <!--            <el-icon color="#409EFF">-->
+          <!--              <Iphone/>-->
+          <!--            </el-icon>-->
+          <!--          </el-button>-->
           <!-- 发送按钮 -->
           <el-button
               v-if="!startRecorderTime && !recorderLoading"
@@ -623,5 +623,10 @@ onMounted(() => {
 
 .upload-tooltip-width {
   width: 300px;
+}
+
+.ai-chat__operate .operate-textarea {
+  box-shadow: none;
+
 }
 </style>

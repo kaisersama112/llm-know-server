@@ -131,4 +131,13 @@ const startChat = (chat: chatType) => {
   props.chatManagement.write(chat.id)
 }
 </script>
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.item-content{
+  .content{
+    .el-card{
+      box-shadow:none;
+      border: #FFFFFF;
+    }
+  }
+}
+</style>

@@ -467,4 +467,7 @@ defineExpose({
 </script>
 <style lang="scss" scoped>
 @import './index.scss';
+.ai-chat__content{
+  background: #FFFFFF;
+}
 </style>
