@@ -627,6 +627,7 @@ onMounted(() => {
 
 .ai-chat__operate .operate-textarea {
   box-shadow: none;
+  background: #FFFFFF;
 
 }
 </style>
