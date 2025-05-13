@@ -8,6 +8,7 @@
       '--el-color-primary-light-9': hexToRgba(applicationDetail?.custom_theme?.theme_color, 0.1)
     }"
   >
+
     <div class="chat-pc__header" :style="customStyle">
       <div class="flex align-center">
         <div class="mr-12 ml-24 flex">
@@ -140,8 +141,10 @@
               </el-dropdown>
             </span>
           </div>
+
           <div class="right-height chat-width">
             <AiChat
+                v-show="!showCallModal"
                 ref="AiChatRef"
                 v-model:applicationDetails="applicationDetail"
                 :available="applicationAvailable"
@@ -154,6 +157,23 @@
             >
             </AiChat>
           </div>
+          <!-- 悬浮按钮升级 -->
+          <transition @click="toggleCallModal" name="bounce">
+            <button
+                @click="toggleCallModal"
+                class="call-button"
+                :class="{ 'ring-pulse': showCallModal }"
+            >
+              📞
+<!--              <span class="phone-icon">📞</span>-->
+            </button>
+          </transition>
+          <!-- 通话弹窗 -->
+          <transition name="fade">
+            <div v-if="showCallModal" class="call-modal-overlay" @click.self="closeCallModal">
+              <AiAudio @close="closeCallModal"></AiAudio>
+            </div>
+          </transition>
         </div>
       </div>
       <div class="collapse">
@@ -165,8 +185,10 @@
         </el-button>
       </div>
     </div>
+
   </div>
   <EditTitleDialog ref="EditTitleDialogRef" @refresh="refreshFieldTitle"/>
+
 </template>
 
 <script setup lang="ts">
@@ -178,12 +200,26 @@ import useStore from '@/stores'
 import useResize from '@/layout/hooks/useResize'
 import {hexToRgba} from '@/utils/theme'
 import EditTitleDialog from './EditTitleDialog.vue'
+import AiAudio from "./AiAudio.vue";
 import {t} from '@/locales'
 
 useResize()
 
 const {user, log, common} = useStore()
+// 语音通话
+const showCallModal = ref(false);
 
+
+const toggleCallModal = () => {
+  if (!showCallModal.value) {
+    showCallModal.value = true
+  } else {
+    closeCallModal()
+  }
+};
+const closeCallModal = () => {
+  showCallModal.value = false;
+};
 const EditTitleDialogRef = ref()
 
 const isCollapse = ref(false)
@@ -543,5 +579,123 @@ onMounted(() => {
 
 .flex {
   background: #FFFFFF;
+}
+
+/* 悬浮按钮 */
+.call-button {
+  position: fixed;
+  top: 75%;
+  right: 5px;
+  z-index: 100;
+  width: 45px;
+  height: 45px;
+  border: none;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #007bff, #00c3ff);
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0, 123, 255, 0.3);
+  transition: transform 0.3s ease,
+  box-shadow 0.3s ease,
+  background 0.3s ease;
+
+  /* 按钮悬浮态 */
+  &:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 12px 32px rgba(0, 123, 255, 0.4);
+
+  }
+
+  /* 按钮激活态 */
+  &:active {
+    transform: scale(0.95);
+  }
+
+  /* 通话时的呼吸效果 */
+  &.ring-pulse {
+    animation: ringPulse 1.5s ease-in-out infinite;
+  }
+
+}
+
+/* 弹窗动画升级 */
+.call-modal-overlay {
+  position: fixed;
+  z-index: 200;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+}
+
+.call-modal-content {
+  position: relative;
+  width: 90%;
+  max-width: 400px;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+/* 定制过渡动画 */
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+  transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+  transform: scale(0.8) translateY(20px);
+}
+
+.bounce-enter-active {
+  animation: bounceIn 0.6s;
+}
+
+.bounce-leave-active {
+  animation: bounceOut 0.6s;
+}
+
+@keyframes ringPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.3),
+    0 0 0 16px rgba(0, 123, 255, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(0, 123, 255, 0),
+    0 0 0 20px rgba(0, 123, 255, 0.15);
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes bounceOut {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(0);
+  }
 }
 </style>

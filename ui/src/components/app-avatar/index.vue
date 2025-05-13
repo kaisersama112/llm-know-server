@@ -5,6 +5,7 @@
     style="flex-shrink: 0"
     v-bind="$attrs"
   >
+
     <slot> {{ firstUserName }} </slot>
   </el-avatar>
 </template>
