@@ -609,6 +609,7 @@ onMounted(() => {
   /* 按钮激活态 */
   &:active {
     transform: scale(0.95);
+
   }
 
   /* 通话时的呼吸效果 */
