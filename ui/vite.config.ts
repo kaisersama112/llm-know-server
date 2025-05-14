@@ -1,7 +1,7 @@
 import {fileURLToPath, URL} from 'node:url'
 import type {ProxyOptions} from 'vite'
 import {defineConfig, loadEnv} from 'vite'
-
+import path from 'path'
 import vue from '@vitejs/plugin-vue'
 import DefineOptions from 'unplugin-vue-define-options/vite'
 
@@ -35,7 +35,8 @@ export default defineConfig(({mode}) => {
         resolve: {
             alias: {
                 '@': fileURLToPath(new URL('./src', import.meta.url)),
-                '@assets': fileURLToPath(new URL('./src/assets', import.meta.url))
+                '@assets': fileURLToPath(new URL('./src/assets', import.meta.url)),
+                'openai-realtime-api-beta': path.resolve(__dirname, './src/views/chat/pc/lib/openai-realtime-api-beta')
             }
         }
     }

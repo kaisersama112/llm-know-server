@@ -60,7 +60,7 @@
 <script setup lang="ts">
 import {ref, onMounted, watch} from 'vue';
 // @ts-ignore
-import {RealtimeClient} from './lib/openai-realtime-api-beta';
+import {RealtimeClient} from 'openai-realtime-api-beta';
 import {WavStreamPlayer, WavRecorder} from 'wavtools';
 
 interface CustomVoice {
@@ -225,11 +225,7 @@ async function connectConversation() {
     isCalling.value = true;
   } catch (error) {
     console.error('连接错误:', error);
-    if (error.message.includes('media stream')) {
-      alert('无法访问麦克风。请检查麦克风设置并确保已授权访问。');
-    } else {
-      alert('连接失败，请检查设置');
-    }
+
   }
 }
 
