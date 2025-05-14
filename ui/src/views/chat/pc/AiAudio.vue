@@ -56,6 +56,7 @@
     </div>
   </div>
 </template>
+
 <script setup lang="ts">
 import {ref, onMounted, watch} from 'vue';
 import {RealtimeClient} from './lib/openai-realtime-api-beta';
