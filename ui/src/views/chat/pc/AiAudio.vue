@@ -4,35 +4,51 @@
       <span class="close-icon">×</span>
     </button>
     <div class="call-content">
-
       <div class="audio-visualization">
         <div class="visual-circle" :class="{ active: isCalling }">
           <div class="ripple"></div>
           <div class="ripple delay-1"></div>
           <div class="ripple delay-2"></div>
           <div class="icon-wrapper">
-
-            <span class="audio-icon">🎤</span>
+            <span class="audio-icon">
+              {{ isAISpeaking ? '🔊' : isRecording ? '🎤' : '🔊' }}
+            </span>
           </div>
         </div>
       </div>
       <div class="call-status">
         {{ isCalling ? '通话中...' : '等待通话开始' }}
       </div>
-      <div v-if="isCalling" class="call-duration">
-        00:00
+      <div class="ai-response-container" v-if="isCalling">
+        <div class="ai-response-text">{{ aiResponseText }}</div>
       </div>
     </div>
     <!-- 操作按钮组 -->
     <div class="action-buttons">
       <template v-if="!isCalling">
-        <button @click="startCall" class="call-button-audio start">
+        <button @click="connectConversation" class="call-button-audio start">
           <span class="button-icon">📞</span>
           <span class="button-text">开始通话</span>
         </button>
       </template>
       <template v-else>
-        <button @click="endCall" class="call-button-audio end">
+        <button v-if="conversationalMode === 'manual'"
+                @mousedown="startRecording"
+                @mouseup="stopRecording"
+                @mouseleave="isRecording ? stopRecording : null"
+                class="call-button-audio start">
+          <span class="button-icon">
+            {{ isRecording ? '⬆️' : '🎤' }}
+          </span>
+          <span class="button-text">
+            {{ isRecording ? '松手发送' : '按住说话' }}
+          </span>
+        </button>
+        <button v-else class="call-button-audio start">
+          <span class="button-icon">📞</span>
+          <span class="button-text">实时对话中</span>
+        </button>
+        <button @click="disconnectConversation" class="call-button-audio end">
           <span class="button-icon">📞</span>
           <span class="button-text">结束通话</span>
         </button>
@@ -40,426 +56,403 @@
     </div>
   </div>
 </template>
-
 <script setup lang="ts">
-import { defineEmits, ref, onMounted } from 'vue';
+import {ref, onMounted, watch} from 'vue';
+import {RealtimeClient} from './lib/openai-realtime-api-beta';
+import {WavStreamPlayer, WavRecorder} from 'wavtools';
+
+interface CustomVoice {
+  id: string;
+  file_id: string;
+  created_at: number;
+}
+
+interface AudioFormatType {
+  value: string;
+  label: string;
+}
 
 const emit = defineEmits(['close']);
 const isCalling = ref(false);
+const isAISpeaking = ref(false);
+const isRecording = ref(false);
+const client = ref<RealtimeClient | null>(null);
+const wsUrl = ref('wss://api.stepfun.com/v1/realtime');
+const apiKey = ref('gTWpvu3Odj7HqKzeacQOFsFmo4vAAkqVkwGKD76vdcXtn61rQQ8BvZ6x5GBxtIgI');
+const modelName = ref('step-1o-audio');
+const selectedVoice = ref({name: '默认音色', value: 'default'});
+const allVoices = ref([{name: '默认音色', value: 'default'}]);
+const conversationalMode = ref('manual');
+const inputAudioFormat = ref({value: 'wav', label: 'WAV'});
+const outputAudioFormat = ref({value: 'wav', label: 'WAV'});
+const wavRecorder = ref(new WavRecorder({sampleRate: 24000}));
+const wavStreamPlayer = ref(new WavStreamPlayer({sampleRate: 24000}));
+const aiResponseText = ref('');
+// 从 localStorage 加载保存的设置
+onMounted(() => {
+  const savedWsUrl = localStorage.getItem('wsUrl');
+  const savedModelName = localStorage.getItem('modelName');
+  const savedApiKey = localStorage.getItem('apiKey');
 
-const emitCloseEvent = () => emit('close');
+  if (savedWsUrl) wsUrl.value = savedWsUrl;
+  if (savedModelName) modelName.value = savedModelName;
+  if (savedApiKey) apiKey.value = savedApiKey;
+});
 
+watch([apiKey, modelName, wsUrl], ([newApiKey, newModelName, newWsUrl]) => {
+  localStorage.setItem('wsUrl', newWsUrl);
+  localStorage.setItem('modelName', newModelName);
+  localStorage.setItem('apiKey', newApiKey);
+  fetchCustomVoices();
+}, {deep: true});
 
-let client: WebSocket | null = null;
-function sendSessionUpdate() {
-  if (!client) return;
-  const sessionUpdateEvent = {
-    event_id: 'unique_event_id',
-    type: 'session.update',
-    session: {
-      modalities: ["text", "audio"],
-      instructions: '你是由阶跃星辰提供的AI聊天助手，你擅长中文，英文，以及多种其他语言的对话。',
-      voice: 'linjiajiejie',
-      input_audio_format: 'pcm16',
-      output_audio_format: 'pcm16',
-      turn_detection: {
-        type: 'server_vad'
+// 获取自定义音色
+async function fetchCustomVoices() {
+  if (!apiKey.value) return;
+  try {
+    const domain = new URL(wsUrl.value).origin;
+    const httpDomain = domain.replace('ws://', 'http://').replace('wss://', 'https://');
+    const response = await fetch(`${httpDomain}/v1/audio/voices?limit=100`, {
+      headers: {
+        Authorization: `Bearer ${apiKey.value}`
+      }
+    });
+
+    const data = await response.json();
+    if (data.object === 'list' && data.data) {
+      allVoices.value = [
+        {name: '默认音色', value: 'default'},
+        ...data.data.map((voice: CustomVoice) => ({
+          name: `自定义音色-${voice.id}`,
+          value: voice.id
+        }))
+      ];
+    }
+  } catch (error) {
+    console.error('获取自定义音色出错:', error);
+  }
+}
+
+async function initClient() {
+  // WebSocket 中转服务 url
+  let wsProxyUrl = 'ws://47.253.197.95:5005';
+
+  // 构建查询参数
+  const params = new URLSearchParams();
+
+  if (apiKey.value) params.append('apiKey', apiKey.value);
+  if (modelName.value) params.append('model', modelName.value);
+  if (wsUrl.value) params.append('wsUrl', encodeURIComponent(wsUrl.value));
+
+  const queryString = params.toString();
+  if (queryString) {
+    wsProxyUrl += `?${queryString}`;
+  }
+
+  client.value = new RealtimeClient({url: wsProxyUrl});
+
+  client.value.on('realtime.event', (event: any) => {
+    if (event.source === 'server') {
+      if (event.event.type === 'response.done') {
+        isAISpeaking.value = false;
+      }
+      if (event.event.type === 'response.done') {
+        isAISpeaking.value = false;
+      }
+      if (event.event.type === 'response.audio_transcript.delta') {
+        console.log(event.event)
+        isAISpeaking.value = true;
+        aiResponseText.value += event.event.delta;
       }
     }
-  };
-  client.send(JSON.stringify(sessionUpdateEvent));
-}
-const mediaStream = ref<MediaStream | null>(null);
-const audioContext = ref<AudioContext | null>(null);
-const sourceNode = ref<MediaStreamAudioSourceNode | null>(null);
-function arrayBufferToBase64(buffer: ArrayBuffer): string {
-  let binary = '';
-  const bytes = new Uint8Array(buffer);
-  for (let i = 0; i < bytes.byteLength; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return window.btoa(binary);
+  });
+
+  client.value.on('conversation.updated', (data: any) => {
+    const {delta} = data;
+    if (delta?.audio) {
+      wavStreamPlayer.value.add16BitPCM(delta.audio, 'current');
+      isAISpeaking.value = true;
+    }
+  });
 }
 
-function base64ToArrayBuffer(base64: string): ArrayBuffer {
-  const binaryString = window.atob(base64);
-  const len = binaryString.length;
-  const bytes = new Uint8Array(len);
-  for (let i = 0; i < len; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-  return bytes.buffer;
-}
-async function startCall() {
+async function checkMicrophonePermission() {
   try {
-    isCalling.value = true;
-    mediaStream.value = await navigator.mediaDevices.getUserMedia({ audio: true });
-    audioContext.value = new AudioContext();
-    sourceNode.value = audioContext.value.createMediaStreamSource(mediaStream.value);
-
-    const processor = audioContext.value.createScriptProcessor(4096, 1, 1);
-    sourceNode.value.connect(processor);
-    processor.connect(audioContext.value.destination);
-
-    processor.onaudioprocess = (e) => {
-      const inputData = e.inputBuffer.getChannelData(0);
-      const base64Audio = arrayBufferToBase64(inputData.buffer); // 假设有一个函数可以转换ArrayBuffer到Base64
-      const appendEvent = {
-        event_id: 'unique_event_id',
-        type: 'input_audio_buffer.append',
-        audio: base64Audio
-      };
-      client?.send(JSON.stringify(appendEvent));
-    };
-
-    setTimeout(() => { // 模拟用户结束讲话
-      const commitEvent = {
-        event_id: 'unique_event_id',
-        type: 'input_audio_buffer.commit'
-      };
-      client?.send(JSON.stringify(commitEvent));
-    }, 5000); // 示例：5秒后模拟结束讲话
+    // 请求麦克风权限
+    const stream = await navigator.mediaDevices.getUserMedia({audio: true});
+    stream.getTracks().forEach(track => track.stop()); // 获取权限后立即停止流
+    return true;
   } catch (error) {
-    console.error('无法访问麦克风:', error);
-    alert('无法访问麦克风，请允许权限');
-  }
-}
-function handleServerEvent(data: any) {
-  if (data.type === 'response.audio.delta') {
-    const audioBlob = base64ToArrayBuffer(data.delta); // 假设有一个函数可以转换Base64到ArrayBuffer
-    playAudio(audioBlob);
-  } else if (data.type === 'response.audio.done') {
-    console.log('音频内容已全部接收完毕');
+    console.error('麦克风权限请求失败:', error);
+    return false;
   }
 }
 
-function playAudio(blob: ArrayBuffer) {
-  const url = URL.createObjectURL(new Blob([blob], { type: 'audio/pcm' }));
-  const audioPlayer = new Audio(url);
-  audioPlayer.play();
+async function connectConversation() {
+  if (!apiKey.value || !modelName.value) {
+    alert('请设置服务器信息后再连接');
+    return;
+  }
+
+  try {
+    // 检查麦克风权限
+    const hasPermission = await checkMicrophonePermission();
+    if (!hasPermission) {
+      alert('需要麦克风权限才能进行实时对话');
+      return;
+    }
+
+    await initClient();
+    await wavRecorder.value.begin();  // 可能在这里抛出错误
+    await wavStreamPlayer.value.connect();
+    await client.value?.connect();
+
+    if (client.value) {
+      client.value.sendUserMessageContent([
+        {
+          type: 'input_text',
+          text: '你好！'
+        }
+      ]);
+
+      if (conversationalMode.value === 'realtime') {
+        await wavRecorder.value.record(data => client.value?.appendInputAudio(data.mono));
+      }
+    }
+
+    isCalling.value = true;
+  } catch (error) {
+    console.error('连接错误:', error);
+    if (error.message.includes('media stream')) {
+      alert('无法访问麦克风。请检查麦克风设置并确保已授权访问。');
+    } else {
+      alert('连接失败，请检查设置');
+    }
+  }
 }
-function endCall() {
-  if (mediaStream.value) {
-    mediaStream.value.getTracks().forEach(track => track.stop());
-    mediaStream.value = null;
-  }
 
-  if (audioContext.value) {
-    audioContext.value.close();
-    audioContext.value = null;
-  }
-
-  if (client) {
-    client.close();
-    client = null;
-  }
-
+async function disconnectConversation() {
+  client.value?.disconnect();
+  await wavRecorder.value.end();
+  wavStreamPlayer.value.interrupt();
+  client.value = null;
   isCalling.value = false;
+  isAISpeaking.value = false;
+  isRecording.value = false;
+  aiResponseText.value = '';
 }
-onMounted(() => {
-  const apiKey = 'gTWpvu3Odj7HqKzeacQOFsFmo4vAAkqVkwGKD76vdcXtn61rQQ8BvZ6x5GBxtIgI';
-  client = new WebSocket(`wss://api.stepfun.com/v1/realtime?authorization=Bearer%20${apiKey}&model=step-1o-audio`);
-  // 初始化WebSocket连接
-  // client = new WebSocket('wss://api.stepfun.com/v1/realtime');
 
-  client.onopen = () => {
-    console.log('Connected to the server.');
-    sendSessionUpdate();
-  };
+async function startRecording() {
+  isRecording.value = true;
+  await wavRecorder.value.record(data => client.value?.appendInputAudio(data.mono));
+}
 
-  client.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    handleServerEvent(data);
-  };
-});
+async function stopRecording() {
+  isRecording.value = false;
+  await wavRecorder.value.pause();
+  client.value?.createResponse();
+}
+
+function toggleVAD() {
+  conversationalMode.value = conversationalMode.value === 'manual' ? 'realtime' : 'manual';
+  if (conversationalMode.value === 'realtime' && client.value?.isConnected() && !isRecording.value) {
+    startRecording();
+  } else if (conversationalMode.value === 'manual' && isRecording.value) {
+    stopRecording();
+  }
+}
+
+const emitCloseEvent = () => emit('close');
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .call-container {
   width: 100%;
   height: 100%;
-  padding: 10px 0px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  min-height: 400px;
-  background: #f5f7fb;
-  border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-
-
-  .call-content {
-    width: 100%;
-    height: 80%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-
-    .audio-visualization {
-
-      margin: 2rem 0;
-
-      .visual-circle {
-        width: 180px;
-        height: 180px;
-        border-radius: 50%;
-        background: #e8eefb;
-        transition: all 0.3s ease;
-        position: relative;
-
-        &.active {
-          background: #007bff20;
-
-          .ripple {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            border: 2px solid #007bff;
-            animation: ripple 2s infinite;
-
-            &.delay-1 {
-              animation-delay: 0.66s;
-            }
-
-            &.delay-2 {
-              animation-delay: 1.32s;
-            }
-          }
-        }
-      }
-
-      .icon-wrapper {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: white;
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-
-        .audio-icon {
-          font-size: 2.5rem;
-        }
-      }
-    }
-
-    .call-status {
-      font-size: 1.2rem;
-      color: #4a5568;
-      font-weight: 500;
-    }
-
-  }
-
-
-  .call-duration {
-    font-size: 1.8rem;
-    font-weight: bold;
-    color: #2d3748;
-  }
-
-  .action-buttons {
-    width: 100%;
-    height: 20%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    .call-button-audio {
-      padding: 1rem 2rem;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 0.8rem;
-      transition: all 0.3s ease;
-      font-size: 1.1rem;
-
-      &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      }
-
-      &.start {
-        background: #10b981;
-        color: white;
-      }
-
-      &.end {
-        background: #ef4444;
-        color: white;
-      }
-
-      &.close {
-        background: #f1f5f9;
-        color: #64748b;
-      }
-
-      .button-icon {
-        font-size: 1.4rem;
-      }
-    }
-
-    @keyframes ripple {
-      0% {
-        opacity: 1;
-        transform: scale(0);
-      }
-      100% {
-        opacity: 0;
-        transform: scale(1.5);
-      }
-    }
-  }
+  background: white;
+  border-radius: 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  padding: 24px;
+  position: relative;
 }
 
 .close-button {
   position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 40px;
-  height: 40px;
+  top: 30px;
+  right: 15px;
+  background: none;
   border: none;
-  background: #f1f5f9;
-  border-radius: 50%;
+  font-size: 24px;
+  color: #888;
   cursor: pointer;
+  transition: color 0.3s;
+}
+
+.close-button:hover {
+  color: #333;
+}
+
+.call-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-grow: 1;
+  width: 100%;
+}
+
+.audio-visualization {
+  margin: 24px 0;
+}
+
+.visual-circle {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e9f5ff 0%, #cce0ff 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-
-  &:hover {
-    background: #e2e8f0;
-    transform: rotate(90deg) scale(1.1);
-  }
-
-  .close-icon {
-    font-size: 1.8rem;
-    line-height: 1;
-    color: #64748b;
-  }
-}
-
-
-.visual-circle.active {
-  .ripple {
-    border-width: 3px;
-    animation: ripple 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-
-
-    &::after {
-      content: '';
-      position: absolute;
-      top: -3px;
-      left: -3px;
-      right: -3px;
-      bottom: -3px;
-      border-radius: 50%;
-      background: radial-gradient(circle, #007bff33 20%, transparent 60%);
-    }
-  }
-
-
-  @for $i from 1 through 3 {
-    .ripple:nth-child(#{$i}) {
-      animation-delay: $i * 0.4s;
-    }
-  }
-}
-
-
-.icon-wrapper {
-  transition: transform 0.3s ease;
-
-  .audio-icon {
-    display: inline-block;
-    animation: pulse 2s ease-in-out infinite;
-  }
-}
-
-
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.1);
-  }
-}
-
-
-.call-button-audio {
   position: relative;
   overflow: hidden;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
 
-  &::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    transition: width 0.3s, height 0.3s;
+.visual-circle.active {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7);
   }
-
-  &:active::after {
-    width: 150px;
-    height: 150px;
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 15px rgba(0, 123, 255, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(0, 123, 255, 0);
   }
 }
 
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.8);
+  transform: scale(0);
+  animation: ripple 2s linear infinite;
+}
 
-.close-button {
-  transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55),
-  background 0.2s ease;
+.delay-1 {
+  animation-delay: 0.5s;
+}
 
-  &:hover {
-    transform: rotate(180deg) scale(1.1);
-    background: #ff444480;
+.delay-2 {
+  animation-delay: 1s;
+}
 
-    .close-icon {
-      color: white;
-    }
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
   }
 }
 
+.icon-wrapper {
+  position: relative;
+  z-index: 1;
+}
+
+.audio-icon {
+  font-size: 36px;
+  font-weight: bold;
+  color: #007bff;
+}
 
 .call-status {
-  position: relative;
-
-  &::after {
-    content: '...';
-    animation: dots 1.5s infinite steps(4, end);
-  }
+  margin: 12px 0;
+  font-size: 20px;
+  color: #444;
+  font-weight: 500;
 }
 
-@keyframes dots {
-  0%, 20% {
-    content: "";
-  }
-  40% {
-    content: ".";
-  }
-  60% {
-    content: "..";
-  }
-  80%, 100% {
-    content: "...";
-  }
+.ai-response-container {
+  margin-top: 16px;
+  padding: 16px;
+  background-color: #f0f8ff;
+  border-radius: 10px;
+  width: 100%;
+  max-width: 400px;
+  margin: 16px 0;
+}
+
+.ai-response-text {
+  font-size: 17px;
+  line-height: 1.55;
+  color: #333;
+  word-break: break-word;
+}
+
+.call-duration {
+  font-size: 16px;
+  color: #666;
+  margin: 8px 0;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 16px;
+  margin-top: 24px;
+  margin-bottom: 12px;
+}
+
+.call-button-audio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  border-radius: 50px;
+  border: none;
+  background-color: #4dabf7;
+  color: white;
+  cursor: pointer;
+  min-width: 140px;
+  transition: all 0.3s;
+  font-weight: 500;
+  box-shadow: 0 5px 15px rgba(77, 171, 247, 0.4);
+}
+
+.call-button-audio:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(77, 171, 247, 0.6);
+}
+
+.call-button-audio.end {
+  background-color: #f44336;
+  box-shadow: 0 5px 15px rgba(244, 67, 54, 0.4);
+}
+
+.call-button-audio.end:hover {
+  box-shadow: 0 8px 20px rgba(244, 67, 54, 0.6);
+}
+
+.button-icon {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+.button-text {
+  font-size: 16px;
 }
 </style>
