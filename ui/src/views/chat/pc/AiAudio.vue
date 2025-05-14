@@ -59,6 +59,7 @@
 
 <script setup lang="ts">
 import {ref, onMounted, watch} from 'vue';
+// @ts-ignore
 import {RealtimeClient} from './lib/openai-realtime-api-beta';
 import {WavStreamPlayer, WavRecorder} from 'wavtools';
 
