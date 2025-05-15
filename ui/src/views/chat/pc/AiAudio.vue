@@ -137,7 +137,7 @@ async function fetchCustomVoices() {
 
 async function initClient() {
   // WebSocket 中转服务 url
-  let wsProxyUrl = 'wss://ai.vnppp.com/websocket';
+  let wsProxyUrl = 'ws://0.0.0.0:5005';
 
   // 构建查询参数
   const params = new URLSearchParams();
