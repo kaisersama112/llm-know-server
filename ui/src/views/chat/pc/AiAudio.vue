@@ -1,5 +1,11 @@
 <template>
   <div class="call-container">
+    <!-- 品牌标识 -->
+    <div class="brand-logo">
+      <span class="logo-text">sponge</span>
+      <span class="logo-ai">AI</span>
+    </div>
+
     <button @click="emitCloseEvent" class="close-button">
       <span class="close-icon">×</span>
     </button>
@@ -20,35 +26,30 @@
         {{ isCalling ? '通话中...' : '等待通话开始' }}
       </div>
       <div class="ai-response-container" v-if="isCalling">
-        <div class="ai-response-text">{{ aiResponseText }}</div>
+        <div class="ai-response-text" v-if="aiResponseText.length > 0">
+          <div v-for="(message, index) in aiResponseText" :key="index" class="message">
+            <span class="role"
+                  :class="{ 'agent-role': message.role === 'agent', 'user-role': message.role === 'user' }">
+              {{ message.role === 'agent' ? 'Agent: ' : 'User: ' }}
+            </span>
+            <span class="content">{{ message.content }}</span>
+          </div>
+        </div>
+        <div v-else>
+          <p></p>
+        </div>
       </div>
     </div>
     <!-- 操作按钮组 -->
     <div class="action-buttons">
       <template v-if="!isCalling">
-        <button @click="connectConversation" class="call-button-audio start">
+        <button @click="startCall" class="call-button-audio start">
           <span class="button-icon">📞</span>
           <span class="button-text">开始通话</span>
         </button>
       </template>
       <template v-else>
-        <button v-if="conversationalMode === 'manual'"
-                @mousedown="startRecording"
-                @mouseup="stopRecording"
-                @mouseleave="isRecording ? stopRecording : null"
-                class="call-button-audio start">
-          <span class="button-icon">
-            {{ isRecording ? '⬆️' : '🎤' }}
-          </span>
-          <span class="button-text">
-            {{ isRecording ? '松手发送' : '按住说话' }}
-          </span>
-        </button>
-        <button v-else class="call-button-audio start">
-          <span class="button-icon">📞</span>
-          <span class="button-text">实时对话中</span>
-        </button>
-        <button @click="disconnectConversation" class="call-button-audio end">
+        <button @click="endCall" class="call-button-audio end">
           <span class="button-icon">📞</span>
           <span class="button-text">结束通话</span>
         </button>
@@ -58,211 +59,168 @@
 </template>
 
 <script setup lang="ts">
-import {ref, onMounted, watch} from 'vue';
-// @ts-ignore
-import {RealtimeClient} from 'openai-realtime-api-beta';
-import {WavStreamPlayer, WavRecorder} from 'wavtools';
-
-interface CustomVoice {
-  id: string;
-  file_id: string;
-  created_at: number;
-}
-
-interface AudioFormatType {
-  value: string;
-  label: string;
-}
+import {ref, onMounted, onUnmounted} from 'vue';
+import {RetellWebClient} from "retell-client-js-sdk";
+import Retell from 'retell-sdk';
 
 const emit = defineEmits(['close']);
 const isCalling = ref(false);
 const isAISpeaking = ref(false);
 const isRecording = ref(false);
-const client = ref<RealtimeClient | null>(null);
-const wsUrl = ref('wss://api.stepfun.com/v1/realtime');
-const apiKey = ref('gTWpvu3Odj7HqKzeacQOFsFmo4vAAkqVkwGKD76vdcXtn61rQQ8BvZ6x5GBxtIgI');
-const modelName = ref('step-1o-audio');
-const selectedVoice = ref({name: '默认音色', value: 'default'});
-const allVoices = ref([{name: '默认音色', value: 'default'}]);
-const conversationalMode = ref('manual');
-const inputAudioFormat = ref({value: 'wav', label: 'WAV'});
-const outputAudioFormat = ref({value: 'wav', label: 'WAV'});
-const wavRecorder = ref(new WavRecorder({sampleRate: 24000}));
-const wavStreamPlayer = ref(new WavStreamPlayer({sampleRate: 24000}));
-const aiResponseText = ref('');
-// 从 localStorage 加载保存的设置
-onMounted(() => {
-  const savedWsUrl = localStorage.getItem('wsUrl');
-  const savedModelName = localStorage.getItem('modelName');
-  const savedApiKey = localStorage.getItem('apiKey');
-
-  if (savedWsUrl) wsUrl.value = savedWsUrl;
-  if (savedModelName) modelName.value = savedModelName;
-  if (savedApiKey) apiKey.value = savedApiKey;
+const aiResponseText = ref([]); // 更新为数组以存储多条消息
+// 添加通话状态标记
+const isCallInProgress = ref(false);
+const agent_id = "agent_d722981c6b81c7e211cbcf6b0d";
+const api_key = "key_7901d40261d47d67b674c57aa968";
+const client = new Retell({
+  apiKey: api_key,
 });
 
-watch([apiKey, modelName, wsUrl], ([newApiKey, newModelName, newWsUrl]) => {
-  localStorage.setItem('wsUrl', newWsUrl);
-  localStorage.setItem('modelName', newModelName);
-  localStorage.setItem('apiKey', newApiKey);
-  fetchCustomVoices();
-}, {deep: true});
+const retellWebClient = new RetellWebClient();
 
-// 获取自定义音色
-async function fetchCustomVoices() {
-  if (!apiKey.value) return;
-  try {
-    const domain = new URL(wsUrl.value).origin;
-    const httpDomain = domain.replace('ws://', 'http://').replace('wss://', 'https://');
-    const response = await fetch(`${httpDomain}/v1/audio/voices?limit=100`, {
-      headers: {
-        Authorization: `Bearer ${apiKey.value}`
+async function getCallStatus() {
+  const webCallResponse = await client.call.createWebCall(
+      {
+        agent_id: agent_id
       }
-    });
+  );
+  console.log(webCallResponse.access_token);
+  console.log(webCallResponse.agent_id);
+  return webCallResponse;
+}
 
-    const data = await response.json();
-    if (data.object === 'list' && data.data) {
-      allVoices.value = [
-        {name: '默认音色', value: 'default'},
-        ...data.data.map((voice: CustomVoice) => ({
-          name: `自定义音色-${voice.id}`,
-          value: voice.id
-        }))
-      ];
+function handleBeforeUnload() {
+  if (isCalling.value) {
+    try {
+      retellWebClient.stopCall();
+      console.log("页面关闭时已结束通话");
+    } catch (error) {
+      console.error("页面关闭时结束通话失败:", error);
     }
-  } catch (error) {
-    console.error('获取自定义音色出错:', error);
   }
 }
 
-async function initClient() {
-  // WebSocket 中转服务 url
-  let wsProxyUrl = 'wss://47.253.197.95:5005';
+onMounted(() => {
+  window.addEventListener('beforeunload', handleBeforeUnload);
+})
 
-  // 构建查询参数
-  const params = new URLSearchParams();
+onUnmounted(() => {
+  retellWebClient.removeAllListeners();
+  window.removeEventListener('beforeunload', handleBeforeUnload);
 
-  if (apiKey.value) params.append('apiKey', apiKey.value);
-  if (modelName.value) params.append('model', modelName.value);
-  if (wsUrl.value) params.append('wsUrl', encodeURIComponent(wsUrl.value));
+})
 
-  const queryString = params.toString();
-  if (queryString) {
-    wsProxyUrl += `?${queryString}`;
-  }
 
-  client.value = new RealtimeClient({url: wsProxyUrl});
+// 监听通话事件
+function listenCallEvents() {
+  console.log("开始监听通话事件");
 
-  client.value.on('realtime.event', (event: any) => {
-    if (event.source === 'server') {
-      if (event.event.type === 'response.done') {
-        isAISpeaking.value = false;
-      }
-      if (event.event.type === 'response.done') {
-        isAISpeaking.value = false;
-      }
-      if (event.event.type === 'response.audio_transcript.delta') {
-        console.log(event.event)
-        isAISpeaking.value = true;
-        aiResponseText.value += event.event.delta;
-      }
-    }
+  retellWebClient.on("call_ended", () => {
+    console.log("收到 call_ended 事件");
+    // 确保状态被清理
+    manageCallState(false);
   });
 
-  client.value.on('conversation.updated', (data: any) => {
-    const {delta} = data;
-    if (delta?.audio) {
-      wavStreamPlayer.value.add16BitPCM(delta.audio, 'current');
-      isAISpeaking.value = true;
-    }
+  retellWebClient.on("agent_stop_talking", () => {
+    console.log("收到 agent_stop_talking 事件");
+    // 明确标记 AI 停止讲话
+    isAISpeaking.value = false;
+    isRecording.value = false;
+  });
+
+  retellWebClient.on("error", (error) => {
+    console.error("通话错误:", error);
+    // 发生错误时也要确保状态被清理
+    manageCallState(false);
+    retellWebClient.stopCall();
   });
 }
 
-async function checkMicrophonePermission() {
+// 开始通话
+async function startCall() {
   try {
-    // 请求麦克风权限
-    const stream = await navigator.mediaDevices.getUserMedia({audio: true});
-    stream.getTracks().forEach(track => track.stop()); // 获取权限后立即停止流
-    return true;
-  } catch (error) {
-    console.error('麦克风权限请求失败:', error);
-    return false;
-  }
-}
-
-async function connectConversation() {
-  if (!apiKey.value || !modelName.value) {
-    alert('请设置服务器信息后再连接');
-    return;
-  }
-
-  try {
-    // 检查麦克风权限
-    const hasPermission = await checkMicrophonePermission();
-    if (!hasPermission) {
-      alert('需要麦克风权限才能进行实时对话');
+    // 首先检查是否有通话正在进行
+    if (isCalling.value || isCallInProgress.value) {
+      console.warn("通话已在进行中，无法重复开始");
       return;
     }
 
-    await initClient();
-    await wavRecorder.value.begin();  // 可能在这里抛出错误
-    await wavStreamPlayer.value.connect();
-    await client.value?.connect();
+    // 标记通话正在建立中
+    isCallInProgress.value = true;
 
-    if (client.value) {
-      client.value.sendUserMessageContent([
-        {
-          type: 'input_text',
-          text: '你好！'
-        }
-      ]);
+    console.log("开始通话...");
+    manageCallState(true);
 
-      if (conversationalMode.value === 'realtime') {
-        await wavRecorder.value.record(data => client.value?.appendInputAudio(data.mono));
-      }
+    let createCallResponse = await getCallStatus();
+    console.log("获取通话状态成功");
+
+    await retellWebClient.startCall({
+      accessToken: createCallResponse.access_token,
+      sampleRate: 24000,
+      captureDeviceId: "default",
+      playbackDeviceId: "0ec1807fd0fe6e51b990660ec4e2ebb78sdfcba51e279815d00c423ce03407ff",
+      emitRawAudioSamples: false,
+    });
+
+    console.log("通话建立成功");
+
+    // 确保通话建立成功后状态正确同步
+    manageCallState(true);
+
+    // 开始通话后监听事件
+    listenCallEvents();
+  } catch (error) {
+    console.error("开始通话失败:", error);
+    // 即使失败也要确保状态被清理
+    manageCallState(false);
+  } finally {
+    // 标记通话建立过程结束
+    isCallInProgress.value = false;
+    console.log("通话建立过程结束");
+  }
+}
+
+// 结束通话
+function endCall() {
+  try {
+    // 检查是否有通话在进行或建立中
+    if (!isCalling.value && !isCallInProgress.value) {
+      console.warn("没有通话在进行，无法结束通话");
+      return;
     }
 
-    isCalling.value = true;
+    console.log("结束通话...");
+    // 首先清理状态
+    manageCallState(false);
+
+    // 然后停止通话
+    retellWebClient.stopCall();
+
+    // 添加日志调试
+    console.log("通话已结束");
   } catch (error) {
-    console.error('连接错误:', error);
-
+    console.error("结束通话失败:", error);
+    // 即使失败也要确保状态被清理
+    manageCallState(false);
   }
 }
 
-async function disconnectConversation() {
-  client.value?.disconnect();
-  await wavRecorder.value.end();
-  wavStreamPlayer.value.interrupt();
-  client.value = null;
-  isCalling.value = false;
-  isAISpeaking.value = false;
-  isRecording.value = false;
-  aiResponseText.value = '';
-}
-
-async function startRecording() {
-  isRecording.value = true;
-  await wavRecorder.value.record(data => client.value?.appendInputAudio(data.mono));
-}
-
-async function stopRecording() {
-  isRecording.value = false;
-  await wavRecorder.value.pause();
-  client.value?.createResponse();
-}
-
-function toggleVAD() {
-  conversationalMode.value = conversationalMode.value === 'manual' ? 'realtime' : 'manual';
-  if (conversationalMode.value === 'realtime' && client.value?.isConnected() && !isRecording.value) {
-    startRecording();
-  } else if (conversationalMode.value === 'manual' && isRecording.value) {
-    stopRecording();
+// 通话状态管理
+const manageCallState = (isStarting) => {
+  if (isStarting) {
+    isCalling.value = true;
+    isAISpeaking.value = true;
+    isRecording.value = true;
+  } else {
+    isCalling.value = false;
+    isAISpeaking.value = false;
+    isRecording.value = false;
+    aiResponseText.value = [];
   }
-}
-
+};
+// 关闭通话组件
 const emitCloseEvent = () => emit('close');
 </script>
-
 <style scoped>
 .call-container {
   width: 100%;
@@ -278,16 +236,39 @@ const emitCloseEvent = () => emit('close');
   position: relative;
 }
 
+/* 品牌标识 */
+.brand-logo {
+  position: absolute;
+  top: 35px;
+  left: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo-text {
+  font-size: 24px;
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+.logo-ai {
+  font-size: 24px;
+  font-weight: 700;
+  color: #4dabf7;
+}
+
+/* 关闭按钮 */
 .close-button {
   position: absolute;
-  top: 30px;
-  right: 15px;
+  top: 35px;
+  right: 24px;
   background: none;
   border: none;
-  font-size: 24px;
+  font-size: 35px;
   color: #888;
   cursor: pointer;
-  transition: color 0.3s;
+  transition: color 0.3s ease;
 }
 
 .close-button:hover {
@@ -384,21 +365,41 @@ const emitCloseEvent = () => emit('close');
   font-weight: 500;
 }
 
+/* AI响应容器 */
 .ai-response-container {
-  margin-top: 16px;
-  padding: 16px;
-  background-color: #f0f8ff;
-  border-radius: 10px;
   width: 100%;
-  max-width: 400px;
-  margin: 16px 0;
+  background-color: #f9fafb;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
 .ai-response-text {
-  font-size: 17px;
-  line-height: 1.55;
+  font-size: 16px;
+  line-height: 1.6;
   color: #333;
   word-break: break-word;
+}
+
+.message {
+  margin-bottom: 12px;
+}
+
+.message:last-child {
+  margin-bottom: 0;
+}
+
+.role {
+  font-weight: 600;
+  margin-right: 8px;
+}
+
+.agent-role {
+  color: #4dabf7;
+}
+
+.user-role {
+  color: #f44336;
 }
 
 .call-duration {
