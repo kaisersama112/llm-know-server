@@ -4,6 +4,7 @@ import {defineConfig, loadEnv} from 'vite'
 import path from 'path'
 import vue from '@vitejs/plugin-vue'
 import DefineOptions from 'unplugin-vue-define-options/vite'
+import {nodePolyfills } from 'vite-plugin-node-polyfill';
 
 const envDir = './env'
 // https://vitejs.dev/config/
@@ -21,7 +22,11 @@ export default defineConfig(({mode}) => {
         lintOnSave: false,
         base: prefix,
         envDir: envDir,
-        plugins: [vue(), DefineOptions()],
+        plugins: [
+            vue(),
+            DefineOptions(),
+            nodePolyfills()
+        ],
         server: {
             cors: true,
             host: '0.0.0.0',
