@@ -29,8 +29,8 @@
         <div class="ai-response-text" v-if="aiResponseText.length > 0">
           <div v-for="(message, index) in aiResponseText" :key="index" class="message">
             <span class="role"
-                  :class="{ 'agent-role': message.role === 'agent', 'user-role': message.role === 'user' }">
-              {{ message.role === 'agent' ? 'Agent: ' : 'User: ' }}
+                  :class="{ 'agent-role': message.role == 'agent', 'user-role': message.role == 'user' }">
+              {{ !(message.role !== 'agent') ? 'Agent: ' : 'User: ' }}
             </span>
             <span class="content">{{ message.content }}</span>
           </div>
@@ -67,7 +67,12 @@ const emit = defineEmits(['close']);
 const isCalling = ref(false);
 const isAISpeaking = ref(false);
 const isRecording = ref(false);
-const aiResponseText = ref([]); // 更新为数组以存储多条消息
+interface Message {
+  role: string;
+  content: string;
+}
+
+const aiResponseText = ref<Message[]>([]);
 // 添加通话状态标记
 const isCallInProgress = ref(false);
 const agent_id = "agent_d722981c6b81c7e211cbcf6b0d";
@@ -206,7 +211,7 @@ function endCall() {
 }
 
 // 通话状态管理
-const manageCallState = (isStarting) => {
+const manageCallState = (isStarting:any) => {
   if (isStarting) {
     isCalling.value = true;
     isAISpeaking.value = true;
