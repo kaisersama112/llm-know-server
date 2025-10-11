@@ -78,5 +78,5 @@ python main.py dev celery
 ```
 
 ```bash
-docker run -d --name llm-know-container-v2 --network maxkb-network -p 8081:8080 llm-know-app-v2
+docker run -d --name llm-know-app-v2 --network maxkb-network -p 8081:8080 -v /data/maxkb/logs:/opt/maxkb/logs -v /data/maxkb/local:/opt/maxkb/local  llm-know-app-v2 
 ```
