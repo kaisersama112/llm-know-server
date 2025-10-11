@@ -1,0 +1,20 @@
+# 数据库配置
+DB_NAME: maxkb_desktop
+DB_HOST: localhost
+DB_PORT: 5233
+DB_USER: root
+DB_PASSWORD: 123456
+DB_ENGINE: django.db.backends.postgresql_psycopg2
+ 
+# redis 配置
+REDIS_HOST: localhost
+REDIS_PORT: 6379
+REDIS_PASSWORD: 
+ 
+ 
+ 
+TIME_ZONE: Asia/Shanghai
+ 
+# 模型相关配置
+EMBEDDING_MODEL_PATH: F:\sun_project\MaxKB-2.2.0\opt\maxkb\model\
+EMBEDDING_MODEL_NAME: F:\sun_project\MaxKB-2.2.0\opt\maxkb\model\m3e-base
