@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 """
-@Project ：MaxKB 
+@Project ：llm-know 
 @File    ：llm.py
 @Author  ：Brian Yang
 @Date    ：5/12/24 7:44 AM 

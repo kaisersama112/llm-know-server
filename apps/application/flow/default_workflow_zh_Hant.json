@@ -13,8 +13,8 @@
                 "stepName": "基本資訊",
                 "node_data": {
                     "desc": "",
-                    "name": "maxkbapplication",
-                    "prologue": "您好，我是MaxKB小助手，您可以向我提出MaxKB使用問題。\n- MaxKB主要功能有什麼？\n- MaxKB支持哪些大語言模型？\n- MaxKB支持哪些文檔類型？"
+                    "name": "llm-know application",
+                    "prologue": "您好，我是llm-know小助手，您可以向我提出llm-know使用問題。\n- llm-know主要功能有什麼？\n- llm-know支持哪些大語言模型？\n- llm-know支持哪些文檔類型？"
                 },
                 "input_field_list": [
 

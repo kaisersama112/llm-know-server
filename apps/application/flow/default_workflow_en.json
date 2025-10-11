@@ -13,8 +13,8 @@
                 "stepName": "Base",
                 "node_data": {
                     "desc": "",
-                    "name": "maxkbapplication",
-                    "prologue": "Hello, I am the MaxKB assistant. You can ask me about MaxKB usage issues.\n-What are the main functions of MaxKB?\n-What major language models does MaxKB support?\n-What document types does MaxKB support?"
+                    "name": "llm-know application",
+                    "prologue": "Hello, I am the llm-know assistant. You can ask me about llm-know usage issues.\n-What are the main functions of llm-know?\n-What major language models does llm-know support?\n-What document types does llm-know support?"
                 },
                 "input_field_list": [
 

@@ -2859,11 +2859,11 @@ msgid "Export template type csv|excel"
 msgstr ""
 
 #: .\apps\dataset\serializers\document_serializers.py:262
-msgid "MaxKB table template.csv"
+msgid "llm-know table template.csv"
 msgstr ""
 
 #: .\apps\dataset\serializers\document_serializers.py:269
-msgid "MaxKB table template.xlsx"
+msgid "llm-know table template.xlsx"
 msgstr ""
 
 #: .\apps\dataset\serializers\document_serializers.py:282
@@ -5895,7 +5895,7 @@ msgid "Cannot modify administrator status"
 msgstr ""
 
 #: .\apps\users\views\user.py:35 .\apps\users\views\user.py:36
-msgid "Get MaxKB related information"
+msgid "Get llm-know related information"
 msgstr ""
 
 #: .\apps\users\views\user.py:38

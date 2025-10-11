@@ -2868,12 +2868,12 @@ msgid "Export template type csv|excel"
 msgstr "导出模版类型 csv|excel"
 
 #: .\apps\dataset\serializers\document_serializers.py:262
-msgid "MaxKB table template.csv"
-msgstr "MaxKB表格模版.csv"
+msgid "llm-know table template.csv"
+msgstr "llm-know表格模版.csv"
 
 #: .\apps\dataset\serializers\document_serializers.py:269
-msgid "MaxKB table template.xlsx"
-msgstr "MaxKB表格模版.xlsx"
+msgid "llm-know table template.xlsx"
+msgstr "llm-know表格模版.xlsx"
 
 #: .\apps\dataset\serializers\document_serializers.py:282
 #: .\apps\dataset\serializers\paragraph_serializers.py:304
@@ -6024,8 +6024,8 @@ msgid "Cannot modify administrator status"
 msgstr "不能修改管理员状态"
 
 #: .\apps\users\views\user.py:35 .\apps\users\views\user.py:36
-msgid "Get MaxKB related information"
-msgstr "获取 MaxKB 相关信息"
+msgid "Get llm-know related information"
+msgstr "获取 llm-know 相关信息"
 
 #: .\apps\users\views\user.py:38
 msgid "System parameters"
