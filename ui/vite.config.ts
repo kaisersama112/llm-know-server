@@ -8,6 +8,7 @@ import path from 'path'
 import { createHtmlPlugin } from 'vite-plugin-html'
 import fs from 'fs'
 // import vueDevTools from 'vite-plugin-vue-devtools'
+import { nodePolyfills } from 'vite-plugin-node-polyfills'; 
 const envDir = './env'
 // 自定义插件：重命名入口文件
 const renameHtmlPlugin = (outDir: string, entry: string) => {
@@ -83,6 +84,16 @@ export default defineConfig((conf: any) => {
     envDir: envDir,
     plugins: [
       vue(),
+      // 在 plugins 数组中添加它
+      nodePolyfills({
+        // 最常见正确的配置：
+         globals: { 
+            Buffer: true, // 内部属性的值是 true，表示启用 polyfill
+            global: true,
+            process: true,
+        },
+         protocolImports: true,
+      }),
       vueJsx(),
       DefineOptions(),
       createHtmlPlugin({ template: ENV.VITE_ENTRY }),
