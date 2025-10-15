@@ -153,7 +153,9 @@
           @load="getList"
           :loading="loading"
         >
-          <!--创建AI的教程视频-->
+          <el-row  :gutter="15" class="w-full">
+                 <el-col :xs="24" :sm="12" :md="8" :lg="6" :xl="6" class="mb-16">
+            <!--创建AI的教程视频-->
             <!-- 在原有CardBox结构中添加以下内容 -->
             <CardBox
                 title="Demo create my AI"
@@ -162,9 +164,6 @@
                 @click="showTutorialDialog"
             >
             </CardBox>
-          <el-row v-if="applicationList.length > 0" :gutter="15" class="w-full">
-                 <el-col :xs="24" :sm="12" :md="8" :lg="6" :xl="6" class="mb-16">
-            
           </el-col>
             <template v-for="(item, index) in applicationList" :key="index">
               <el-col
@@ -311,7 +310,7 @@
               </el-col>
             </template>
           </el-row>
-          <el-empty :description="$t('common.noData')" v-else />
+   
         </InfiniteScroll>
       </div>
     </ContentContainer>
