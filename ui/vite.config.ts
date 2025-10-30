@@ -20,22 +20,18 @@ export default defineConfig(({mode}) => {
         proxyConf['/upload'] = {
         target: 'http://47.85.38.66:7005',
         changeOrigin: true,
-        rewrite: (path) => path.replace(ENV.VITE_BASE_PATH, '/')
     }
         proxyConf['/delete_file'] = {
         target: 'http://47.85.38.66:7005',
         changeOrigin: true,
-        rewrite: (path) => path.replace(ENV.VITE_BASE_PATH, '/')
     }
         proxyConf['/list_files'] = {
         target: 'http://47.85.38.66:7005',
         changeOrigin: true,
-        rewrite: (path) => path.replace(ENV.VITE_BASE_PATH, '/')
     }
         proxyConf['/static/ai_template.mk'] = {
         target: 'http://47.85.38.66:7005',
         changeOrigin: true,
-        rewrite: (path) => path.replace(ENV.VITE_BASE_PATH, '/')
     }
     return {
         preflight: false,
