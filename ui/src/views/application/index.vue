@@ -248,7 +248,7 @@
 
       </div>
     </el-dialog>
-    <CreateApplicationDialog ref="CreateApplicationDialogRef"/>
+    <CreateApplicationDialog ref="CreateApplicationDialogRef" @refresh="searchHandle"/>
     <CopyApplicationDialog ref="CopyApplicationDialogRef"/>
   </div>
 </template>
@@ -382,10 +382,8 @@ const importApplication = (file: any) => {
   elUploadRef.value.clearFiles()
   applicationApi
       .importApplication(formData, loading)
-      .then(async (res: any) => {
-        if (res?.data) {
-          searchHandle()
-        }
+      .then(async () => {
+        searchHandle()
       })
       .catch((e) => {
         if (e.code === 400) {

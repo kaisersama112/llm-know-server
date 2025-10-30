@@ -16,23 +16,23 @@ export default defineConfig(({mode}) => {
         target: 'http://47.85.38.66:8080',
         changeOrigin: true,
         rewrite: (path) => path.replace(ENV.VITE_BASE_PATH, '/')
-    }
+    };
         proxyConf['/upload'] = {
         target: 'http://47.85.38.66:7005',
         changeOrigin: true,
-    }
+    };
         proxyConf['/delete_file'] = {
         target: 'http://47.85.38.66:7005',
         changeOrigin: true,
-    }
+    };
         proxyConf['/list_files'] = {
         target: 'http://47.85.38.66:7005',
         changeOrigin: true,
-    }
+    };
         proxyConf['/static/ai_template.mk'] = {
         target: 'http://47.85.38.66:7005',
         changeOrigin: true,
-    }
+    };
     return {
         preflight: false,
         lintOnSave: false,
