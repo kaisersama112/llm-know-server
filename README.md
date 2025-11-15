@@ -44,7 +44,7 @@ docker build -t llm-know-app -f installer/Dockerfile .
 docker run -d --name llm-know-container-v2 -p 8080:8080 -p 5432:5432 llm-know-app:v2.0 
 
 docker run -d --name llm-know-container-v7 --network maxkb-network -p 8080:8080 -p 5432:5432 llm-know-app:v7.0
-docker run -d --name llm-know-app --network maxkb-network -p 8080:8080 -p 5432:5432 llm-know-app
+
 ```
 
 ### 四. 项目环境配置
