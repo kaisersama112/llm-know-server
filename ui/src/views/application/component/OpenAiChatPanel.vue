@@ -373,9 +373,9 @@ const TEMPLATE_LIST_URL = import.meta.env.VITE_TEMPLATE_LIST_URL || '/list_files
 const TEMPLATE_DOWNLOAD_BASE =
   (import.meta.env.VITE_TEMPLATE_DOWNLOAD_BASE as string | undefined) || '/'
 const DATASET_API_BASE =
-  (import.meta.env.VITE_DATASET_API_BASE as string | undefined) || 'http://localhost:8080/api'
+  (import.meta.env.VITE_DATASET_API_BASE as string | undefined) || '/api'
 const APPLICATION_API_BASE =
-  (import.meta.env.VITE_APPLICATION_API_BASE as string | undefined) || 'http://localhost:8080/api'
+  (import.meta.env.VITE_APPLICATION_API_BASE as string | undefined) || '/api'
 const EMAIL_NODE_ID = 'f72a2a79-a269-4887-8dd1-62abf49443b7'
 const CREATE_AI_PROMPT_CN = '我们聊了一会儿了，请问您想创建AI吗？'
 const { t } = useI18n()
