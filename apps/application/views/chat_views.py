@@ -31,7 +31,7 @@ from common.response import result
 from common.util.common import query_params_to_single_dict
 from dataset.serializers.file_serializers import FileSerializer
 
-OPENAI_API_KEY = "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"
+OPENAI_API_KEY = os.OPENAI_API_KEY
 
 
 class Openai(APIView):

@@ -35,6 +35,7 @@ git clone https://github.com/kaisersama112/llm-know-server.git
 
 ```bash
 docker build -t llm-know-app:v7.0 -f installer/Dockerfile .
+docker build -t llm-know-app -f installer/Dockerfile .
 ```
 
 3. 镜像启动
