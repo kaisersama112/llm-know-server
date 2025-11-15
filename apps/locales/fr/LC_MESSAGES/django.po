@@ -5856,11 +5856,11 @@ msgstr ""
 
 #: .\apps\users\serializers\user_serializers.py:558
 msgid "All"
-msgstr ""
+msgstr "Tous"
 
 #: .\apps\users\serializers\user_serializers.py:559
 msgid "Me"
-msgstr "Mine"
+msgstr "Moi"
 
 #: .\apps\users\serializers\user_serializers.py:581
 #: .\apps\users\serializers\user_serializers.py:678

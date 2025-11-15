@@ -118,7 +118,7 @@ const deleteTemplate: (
   try {
     const headers = buildAuthHeaders(token)
     
-    const query = new URLSearchParams({ filename:  `static/${fileName}` }).toString()
+    const query = new URLSearchParams({ filename:  `${fileName}` }).toString()
     console.log(query);
     const response = await axios.post(`${deleteUrl}?${query}`, undefined, {
       headers

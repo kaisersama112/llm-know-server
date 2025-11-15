@@ -142,7 +142,12 @@
                 :accept="getAcceptList()"
                 :on-change="(file: any, fileList: any) => uploadFile(file, fileList)"
             >
-              <el-tooltip effect="dark" placement="top" popper-class="upload-tooltip-width">
+              <el-tooltip
+                  ref="uploadTooltipRef"
+                  effect="dark"
+                  placement="top"
+                  popper-class="upload-tooltip-width"
+              >
                 <template #content>
                   <div class="break-all pre-wrap">
                     {{ $t('chat.uploadFile.label') }}：{{
@@ -307,6 +312,9 @@ const checkMaxFilesLimit = () => {
 }
 
 const uploadFile = async (file: any, fileList: any) => {
+  if (uploadTooltipRef.value && typeof uploadTooltipRef.value.hide === 'function') {
+    uploadTooltipRef.value.hide()
+  }
   const {maxFiles, fileLimit} = props.applicationDetails.file_upload_setting
   // 单次上传文件数量限制
   const file_limit_once =
@@ -404,6 +412,7 @@ const uploadVideoList = ref<Array<any>>([])
 const uploadAudioList = ref<Array<any>>([])
 const mediaRecorderStatus = ref(true)
 const showDelete = ref('')
+const uploadTooltipRef = ref()
 
 // 定义响应式引用
 const mediaRecorder = ref<any>(null)
@@ -628,6 +637,7 @@ onMounted(() => {
 .ai-chat__operate .operate-textarea {
   box-shadow: none;
   background: #FFFFFF;
+  border-radius:0 !important;
 
 }
 </style>

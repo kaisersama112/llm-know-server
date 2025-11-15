@@ -160,9 +160,12 @@
           <!-- 悬浮按钮升级 -->
           <transition @click="toggleCallModal" name="bounce">
             <button
+                ref="callButtonRef"
                 @click="toggleCallModal"
+                @pointerdown="handleCallButtonPointerDown"
                 class="call-button"
                 :class="{ 'ring-pulse': showCallModal }"
+                :style="callButtonStyle"
             >
               📞
 <!--              <span class="phone-icon">📞</span>-->
@@ -192,7 +195,7 @@
 </template>
 
 <script setup lang="ts">
-import {ref, onMounted, nextTick, computed} from 'vue'
+import {ref, onMounted, nextTick, computed, onUnmounted, reactive} from 'vue'
 import {marked} from 'marked'
 import {saveAs} from 'file-saver'
 import {isAppIcon} from '@/utils/application'
@@ -208,9 +211,59 @@ useResize()
 const {user, log, common} = useStore()
 // 语音通话
 const showCallModal = ref(false);
+const callButtonRef = ref<HTMLButtonElement | null>(null)
+
+const CALL_BUTTON_SIZE = 45
+const CALL_BUTTON_MARGIN = 16
+const LONG_PRESS_DELAY = 350
+
+const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max)
+
+const resolveInitialButtonPosition = () => {
+  if (typeof window === 'undefined') {
+    return {top: 0, left: 0}
+  }
+  const top = clamp(
+      window.innerHeight * 0.75,
+      CALL_BUTTON_MARGIN,
+      Math.max(CALL_BUTTON_MARGIN, window.innerHeight - CALL_BUTTON_SIZE - CALL_BUTTON_MARGIN)
+  )
+  const left = clamp(
+      window.innerWidth - CALL_BUTTON_SIZE - CALL_BUTTON_MARGIN,
+      CALL_BUTTON_MARGIN,
+      Math.max(CALL_BUTTON_MARGIN, window.innerWidth - CALL_BUTTON_SIZE - CALL_BUTTON_MARGIN)
+  )
+  return {top, left}
+}
+
+const initialButtonPosition = resolveInitialButtonPosition()
+
+const callButtonPosition = reactive({
+  top: initialButtonPosition.top,
+  left: initialButtonPosition.left
+})
+
+const callButtonStyle = computed(() => ({
+  top: `${callButtonPosition.top}px`,
+  left: `${callButtonPosition.left}px`,
+  right: 'auto'
+}))
+
+const dragState = reactive({
+  dragging: false,
+  pressTimer: null as number | null,
+  offsetX: 0,
+  offsetY: 0,
+  lastEvent: null as PointerEvent | null,
+  blockClick: false,
+  moved: false
+})
 
 
 const toggleCallModal = () => {
+  if (dragState.dragging || dragState.blockClick) {
+    return
+  }
   if (!showCallModal.value) {
     showCallModal.value = true
   } else {
@@ -220,6 +273,116 @@ const toggleCallModal = () => {
 const closeCallModal = () => {
   showCallModal.value = false;
 };
+
+const setButtonPosition = (left: number, top: number) => {
+  if (typeof window === 'undefined') {
+    callButtonPosition.left = left
+    callButtonPosition.top = top
+    return
+  }
+  const maxLeft = Math.max(CALL_BUTTON_MARGIN, window.innerWidth - CALL_BUTTON_SIZE - CALL_BUTTON_MARGIN)
+  const maxTop = Math.max(CALL_BUTTON_MARGIN, window.innerHeight - CALL_BUTTON_SIZE - CALL_BUTTON_MARGIN)
+  callButtonPosition.left = clamp(left, CALL_BUTTON_MARGIN, maxLeft)
+  callButtonPosition.top = clamp(top, CALL_BUTTON_MARGIN, maxTop)
+}
+
+const clearPressTimer = () => {
+  if (dragState.pressTimer !== null) {
+    clearTimeout(dragState.pressTimer)
+    dragState.pressTimer = null
+  }
+}
+
+const stopDragging = (shouldBlockClick: boolean) => {
+  if (dragState.dragging) {
+    dragState.dragging = false
+    if (typeof document !== 'undefined') {
+      document.body.style.userSelect = ''
+    }
+    if (dragState.moved && shouldBlockClick) {
+      dragState.blockClick = true
+      setTimeout(() => {
+        dragState.blockClick = false
+      }, 120)
+    }
+  }
+  dragState.moved = false
+}
+
+const startDragging = () => {
+  if (!dragState.lastEvent) return
+  dragState.dragging = true
+  dragState.moved = false
+  dragState.offsetX = dragState.lastEvent.clientX - callButtonPosition.left
+  dragState.offsetY = dragState.lastEvent.clientY - callButtonPosition.top
+  if (typeof document !== 'undefined') {
+    document.body.style.userSelect = 'none'
+  }
+}
+
+const handlePointerMove = (event: PointerEvent) => {
+  dragState.lastEvent = event
+  if (!dragState.dragging) {
+    return
+  }
+  event.preventDefault()
+  const nextLeft = event.clientX - dragState.offsetX
+  const nextTop = event.clientY - dragState.offsetY
+  setButtonPosition(nextLeft, nextTop)
+  dragState.moved = true
+}
+
+const handlePointerUp = () => {
+  const shouldBlock = dragState.dragging && dragState.moved
+  stopDragging(shouldBlock)
+  clearPressTimer()
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('pointermove', handlePointerMove)
+    window.removeEventListener('pointerup', handlePointerUp)
+    window.removeEventListener('pointercancel', handlePointerCancel)
+  }
+}
+
+const handlePointerCancel = () => {
+  stopDragging(false)
+  clearPressTimer()
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('pointermove', handlePointerMove)
+    window.removeEventListener('pointerup', handlePointerUp)
+    window.removeEventListener('pointercancel', handlePointerCancel)
+  }
+}
+
+const addPointerListeners = () => {
+  if (typeof window === 'undefined') return
+  window.addEventListener('pointermove', handlePointerMove, {passive: false})
+  window.addEventListener('pointerup', handlePointerUp)
+  window.addEventListener('pointercancel', handlePointerCancel)
+}
+
+const handleCallButtonPointerDown = (event: PointerEvent) => {
+  if (event.pointerType === 'mouse' && event.button !== 0) {
+    return
+  }
+  event.preventDefault()
+  event.stopPropagation()
+  if (typeof window === 'undefined') {
+    return
+  }
+  dragState.lastEvent = event
+  clearPressTimer()
+  dragState.pressTimer = window.setTimeout(() => {
+    startDragging()
+  }, LONG_PRESS_DELAY)
+  addPointerListeners()
+}
+
+const handleWindowResize = () => {
+  if (typeof window === 'undefined') {
+    return
+  }
+  setButtonPosition(callButtonPosition.left, callButtonPosition.top)
+}
 const EditTitleDialogRef = ref()
 
 const isCollapse = ref(false)
@@ -443,6 +606,25 @@ const init = () => {
 }
 onMounted(() => {
   init()
+  if (typeof window !== 'undefined') {
+    const {top, left} = resolveInitialButtonPosition()
+    callButtonPosition.top = top
+    callButtonPosition.left = left
+    window.addEventListener('resize', handleWindowResize)
+  }
+})
+
+onUnmounted(() => {
+  clearPressTimer()
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('pointermove', handlePointerMove)
+    window.removeEventListener('pointerup', handlePointerUp)
+    window.removeEventListener('pointercancel', handlePointerCancel)
+    window.removeEventListener('resize', handleWindowResize)
+  }
+  if (typeof document !== 'undefined') {
+    document.body.style.userSelect = ''
+  }
 })
 </script>
 <style lang="scss">
@@ -484,7 +666,7 @@ onMounted(() => {
     box-sizing: border-box;
 
     .right-header {
-      background: #ffffff;
+      background: #232F3E;
       box-sizing: border-box;
     }
 
@@ -578,14 +760,13 @@ onMounted(() => {
 }
 
 .flex {
-  background: #FFFFFF;
+  // background: #FFFFFF;
+  background: #232F3E;
 }
 
 /* 悬浮按钮 */
 .call-button {
   position: fixed;
-  top: 75%;
-  right: 5px;
   z-index: 100;
   width: 45px;
   height: 45px;
@@ -598,6 +779,7 @@ onMounted(() => {
   transition: transform 0.3s ease,
   box-shadow 0.3s ease,
   background 0.3s ease;
+  touch-action: none;
 
   /* 按钮悬浮态 */
   &:hover {
@@ -698,5 +880,35 @@ onMounted(() => {
   100% {
     transform: scale(0);
   }
+}
+.chat-pc__header h4{
+  color: #ddd;
+}
+.ellipsis-1{
+  color: #ddd;
+}
+#preview-only-preview{
+  color: #0f1111;
+}
+.ai-chat__content{
+  background-color: #232F3E !important;
+}
+.chat-pc__left{
+  background-color: #232F3E;
+}
+.ai-chat__operate{
+  background-color: #232F3E !important;
+}
+.ai-chat__operate::before{
+  background-color: none;
+}
+.operate{
+  background-color: #ffffff;
+}
+.operate .flex{
+  background-color: #ffffff;
+}
+.chat-pc__left p{
+  color: #ddd;
 }
 </style>

@@ -13,7 +13,7 @@ export default defineConfig(({mode}) => {
     const prefix = process.env.VITE_DYNAMIC_PREFIX || ENV.VITE_BASE_PATH;
     const proxyConf: Record<string, string | ProxyOptions> = {}
     proxyConf['/api'] = {
-        target: 'http://47.85.38.66:8080',
+        target: 'http://127.0.0.1:8000/',
         changeOrigin: true,
         rewrite: (path) => path.replace(ENV.VITE_BASE_PATH, '/')
     };
@@ -30,6 +30,10 @@ export default defineConfig(({mode}) => {
         changeOrigin: true,
     };
         proxyConf['/static/ai_template.mk'] = {
+        target: 'http://47.85.38.66:7005',
+        changeOrigin: true,
+    };
+           proxyConf['/static/'] = {
         target: 'http://47.85.38.66:7005',
         changeOrigin: true,
     };

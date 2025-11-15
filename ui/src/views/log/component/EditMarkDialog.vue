@@ -157,7 +157,7 @@ defineExpose({ open })
   @media screen and (max-width: 768px) {
     width: 100% !important;
     max-width: 100vw;
-    margin: 5vh auto !important;
+    margin: 3vh auto !important;
   }
 }
 .edit-mark-dialog {

@@ -240,12 +240,25 @@ onBeforeUnmount(() => {
   }
 })
 
+const decodeFileName = (value: string) => {
+  try {
+    return decodeURIComponent(value)
+  } catch {
+    return value
+  }
+}
+
 const getFileName = (file: any) => {
-  return file?.file_name || file?.stored_name || file?.name || file?.filename || ''
+  const raw = file?.file_name || file?.stored_name || file?.name || file?.filename || ''
+  if (!raw) return ''
+  const decoded = decodeFileName(raw)
+  const sanitized = decoded.replace(/^static\//i, '')
+  const segments = sanitized.split('/')
+  return segments.pop() || sanitized
 }
 
 const handleDeleteTemplate = async (file: any) => {
-  const fileName = getFileName(file)
+  const fileName = getFileName(file);
   if (!fileName) {
     MsgError(t('views.system.aiTemplate.deleteFailed'))
     return

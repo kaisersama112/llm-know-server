@@ -23,7 +23,14 @@ DEBUG = CONFIG.get_debug()
 ALLOWED_HOSTS = ['*']
 
 DATABASES = {
-    'default': CONFIG.get_db_setting()
+        'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'maxkb',   # 数据库名称
+        'USER': 'postgres',         # 数据库用户
+        'PASSWORD': '', # 数据库密码
+        'HOST': 'localhost',            # 或数据库服务器地址
+        'PORT': '5432',                 # 通常是 5432, 根据需要修改
+    }
 }
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

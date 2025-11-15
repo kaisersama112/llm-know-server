@@ -5985,11 +5985,11 @@ msgstr "邮箱或用户名"
 
 #: .\apps\users\serializers\user_serializers.py:558
 msgid "All"
-msgstr "全部"
+msgstr "すべて"
 
 #: .\apps\users\serializers\user_serializers.py:559
 msgid "Me"
-msgstr "我的"
+msgstr "私"
 
 #: .\apps\users\serializers\user_serializers.py:581
 #: .\apps\users\serializers\user_serializers.py:678

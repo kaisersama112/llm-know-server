@@ -393,7 +393,7 @@ defineExpose({ open })
   @media screen and (max-width: 768px) {
     width: 100% !important;
     max-width: 100vw;
-    margin: 5vh auto !important;
+    margin: 4vh auto !important;
   }
 }
 // 在现有样式中添加

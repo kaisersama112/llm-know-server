@@ -1,13 +1,19 @@
-# coding=utf-8
+﻿# coding=utf-8
 """
     @project: maxkb
-    @Author：虎
-    @file： chat_views.py
-    @date：2023/11/14 9:53
-    @desc:
+    @AuthorCODEX
+    @filechat_views.py
+    @date2025/11/14 9:53
+    @desc:这是open ai的聊天接口
 """
 
+import json
+import os
+
+import httpx
+from django.http import JsonResponse, StreamingHttpResponse
 from django.utils.translation import gettext_lazy as _
+from django.views import View
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.decorators import action
 from rest_framework.request import Request
@@ -25,6 +31,8 @@ from common.response import result
 from common.util.common import query_params_to_single_dict
 from dataset.serializers.file_serializers import FileSerializer
 
+OPENAI_API_KEY = "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"
+
 
 class Openai(APIView):
     authentication_classes = [OpenAIKeyAuth]
@@ -37,6 +45,182 @@ class Openai(APIView):
     def post(self, request: Request, application_id: str):
         return OpenAIChatSerializer(data={'application_id': application_id, 'client_id': request.auth.client_id,
                                           'client_type': request.auth.client_type}).chat(request.data)
+
+
+class OpenAIChatProxy(View):
+    http_method_names = ['post']
+
+    def post(self, request, *args, **kwargs):
+        if not OPENAI_API_KEY:
+            return JsonResponse({"message": "Missing OPENAI_API_KEY"}, status=500)
+
+        try:
+            body = json.loads(request.body.decode('utf-8') or '{}')
+        except json.JSONDecodeError:
+            return JsonResponse({"message": "Invalid JSON payload"}, status=400)
+
+        history = body.get('history') or []
+        prompt = body.get('prompt') or ''
+        effort = body.get('effort') or 'medium'
+        if not prompt:
+            return JsonResponse({"message": "Prompt is required"}, status=400)
+
+        # 过滤非法 history
+        normalized_history = [
+            item for item in history
+            if isinstance(item, dict) and item.get('role') and item.get('content')
+        ]
+
+        # 之前已有多少条用户消息（不含当前这一条）
+        user_turns = sum(1 for item in normalized_history if item.get('role') == 'user')
+
+        # 当前这一轮的完整 messages（给 /v1/responses 用）
+        inputs = [*normalized_history, {'role': 'user', 'content': prompt}]
+
+        def build_simple_response(message: str):
+            """简单 SSE 输出 create_ai 或提示语"""
+            def generator():
+                payload = json.dumps({"delta": message}, ensure_ascii=False)
+                yield f"data: {payload}\n\n".encode('utf-8')
+                yield b"data: [DONE]\n\n"
+
+            return StreamingHttpResponse(generator(), content_type='text/event-stream')
+
+        normalized = prompt.lower()
+
+        # === 0. 关键词直接触发创建 AI（最高优先级） ===
+        if ('创建' in prompt) or ('作成' in prompt) or ('create' in normalized):
+            return build_simple_response('create_ai')
+
+        # === 1. 判断上一轮是否问过“要不要创建 AI”，如果这轮是肯定回答，则直接 create_ai ===
+
+        # 找出最后一条助手消息
+        last_assistant_msg = None
+        for item in reversed(normalized_history):
+            if item.get('role') == 'assistant':
+                last_assistant_msg = item.get('content') or ''
+                break
+
+        asked_create_ai = False
+        if last_assistant_msg:
+            la_lower = last_assistant_msg.lower()
+            # 根据你实际的提问文案来判断，这里是一个大概的规则
+            if (
+                ('创建' in last_assistant_msg and 'ai' in la_lower)
+                or ('专属 ai' in last_assistant_msg)
+                or ('create' in la_lower and 'ai' in la_lower)
+            ):
+                asked_create_ai = True
+
+        is_yes = False
+        # 这里加一层轮次判断，你说“第四轮判断”，就限制在 user_turns >= 3 时再触发
+        if asked_create_ai and user_turns >= 2:
+            try:
+                timeout = httpx.Timeout(15.0, read=15.0)
+                with httpx.Client(timeout=timeout) as client:
+                    classify_payload = {
+                        "model": "gpt-4o-mini",  # 轻量模型做意图分类即可
+                        "messages": [
+                            {
+                                "role": "system",
+                                "content": (
+                                    "你是一个意图分类器，只能回答 'yes' 或 'no'。"
+                                    "AI 在上一轮问用户是否需要创建一个 AI 助手。"
+                                    "现在给你用户的这一句回复，请判断用户是否明确同意创建 AI。"
+                                    "同意、可以、好、没问题、帮我创建、试试、开始吧等 = yes。"
+                                    "拒绝、没兴趣、否定、不相关或听不懂 = no。"
+                                    "只输出小写 'yes' 或 'no'，不要输出其他任何内容。"
+                                )
+                            },
+                            {
+                                "role": "user",
+                                "content": (
+                                    f"AI 上一轮的提问：{last_assistant_msg}\n"
+                                    f"用户这一轮的回答：{prompt}"
+                                )
+                            }
+                        ]
+                    }
+                    resp = client.post(
+                        "https://api.openai.com/v1/chat/completions",
+                        headers={
+                            "Authorization": f"Bearer {OPENAI_API_KEY}",
+                            "Content-Type": "application/json",
+                        },
+                        json=classify_payload,
+                    )
+                    resp.raise_for_status()
+                    data = resp.json()
+                    content = (
+                        data.get("choices", [{}])[0]
+                        .get("message", {})
+                        .get("content", "")
+                        .strip()
+                        .lower()
+                    )
+                    if "yes" in content:
+                        is_yes = True
+            except httpx.HTTPError:
+                # 分类失败就当没触发，继续正常对话
+                is_yes = False
+
+        # 如果判定为“同意创建 AI” ➜ 直接返回 create_ai
+        if is_yes:
+            return build_simple_response('create_ai')
+
+        # === 2. 到了第 4 句用户消息时，让 OpenAI 在回答末尾顺带问要不要创建 AI ===
+
+        extra_system_message = None
+        # user_turns == 3：说明之前有 3 条 user 消息，这一条是第 4 条
+        if user_turns == 2:
+            extra_system_message = {
+                "role": "system",
+                "content": (
+                    "在本轮对话中，请先正常、完整地回答用户的问题。"
+                    "然后在回答的最后，用一句简短的中文补充一句："
+                    "“顺便一提，我也可以帮你创建一个专属 AI，需要我帮忙吗？”。"
+                    "请务必把这句话放在回答的最后一行，不要放在开头，需要对应用户prompt的语言。"
+                )
+            }
+
+        if extra_system_message:
+            inputs_for_openai = [extra_system_message, *inputs]
+        else:
+            inputs_for_openai = inputs
+
+        # === 3. 正常走 /v1/responses 的流式对话 ===
+
+        headers = {
+            "Authorization": f"Bearer {OPENAI_API_KEY}",
+            "Content-Type": "application/json",
+            "Accept": "text/event-stream"
+        }
+        payload = {
+            "model": "gpt-5",
+            "stream": True,
+            "input": inputs_for_openai,
+            "reasoning": {"effort": effort}
+        }
+
+        def stream():
+            timeout = httpx.Timeout(60.0, read=None)
+            try:
+                with httpx.Client(timeout=timeout) as client:
+                    with client.stream(
+                        "POST",
+                        "https://api.openai.com/v1/responses",
+                        headers=headers,
+                        json=payload,
+                    ) as resp:
+                        resp.raise_for_status()
+                        for chunk in resp.iter_bytes():
+                            if chunk:
+                                yield chunk
+            except httpx.HTTPError as exc:
+                message = f"data: [error] {str(exc)}\n\n"
+                yield message.encode('utf-8')
+
+        return StreamingHttpResponse(stream(), content_type='text/event-stream')
 
 
 class ChatView(APIView):

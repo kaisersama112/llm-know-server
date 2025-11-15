@@ -78,9 +78,9 @@ class Status:
 
 
 class Type(models.TextChoices):
-    base = 0, '通用类型'
+    base = '0', '通用类型'
 
-    web = 1, 'web站点类型'
+    web = '1', 'web站点类型'
 
 
 class HitHandlingMethod(models.TextChoices):
