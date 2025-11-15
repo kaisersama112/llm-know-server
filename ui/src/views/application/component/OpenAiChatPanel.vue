@@ -444,7 +444,11 @@ const applicationState = reactive({
   publishMessage: '',
   formVisible: true
 })
-const getAuthToken = () => (user?.getToken ? user.getToken() : localStorage.getItem('token')) || ''
+const getAuthToken = (): string => {
+  const token = user?.getToken ? user.getToken() : localStorage.getItem('token');
+  return token ? String(token) : '';
+};
+
 
 const resetDatasetForm = () => {
   datasetForm.name = ''
@@ -479,7 +483,7 @@ const loadEmbeddingModels = async () => {
         label: item?.model_name || item?.name || item?.id,
         value: item?.id || item?.model_id || item?.value || item?.model_name || item?.name
       }))
-      .filter((item) => Boolean(item.value))
+      .filter((item: { value: any }) => Boolean(item.value))
     datasetEmbeddingOptions.value = mapped
   } catch (error: any) {
     datasetFormError.value =

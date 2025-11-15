@@ -611,6 +611,7 @@
 <script setup lang="ts">
 import {ref, onMounted, reactive, nextTick} from 'vue'
 import axios from 'axios'
+import type { AxiosRequestConfig, AxiosRequestHeaders } from 'axios'
 import type {UploadInstance, UploadFile, UploadFiles} from 'element-plus'
 import applicationApi from '@/api/application'
 import CreateApplicationDialog from './component/CreateApplicationDialog.vue'
@@ -928,7 +929,7 @@ const submitDatasetUpload = async () => {
   })
   formData.append('dataset_id', aiDatasetUploadDataset.value.id)
   aiDatasetUploadLoading.value = true
-  const token = user.getToken ? user.getToken() : localStorage.getItem('token')
+  const token: string | undefined = localStorage.getItem('token') ?? undefined
   let splitSucceeded = false
   try {
     const splitResponse = await axios.post('/api/dataset/document/split', formData, {
@@ -968,7 +969,7 @@ const submitDatasetUpload = async () => {
 
 const fetchEmbeddingModels = () => {
   aiEmbeddingModelsLoading.value = true
-  const token = user.getToken ? user.getToken() : localStorage.getItem('token')
+  const token: string | undefined = localStorage.getItem('token') ?? undefined
   axios
       .get('/api/model', {
         params: {model_type: 'EMBEDDING'},
@@ -990,7 +991,7 @@ const fetchEmbeddingModels = () => {
 }
 
 const fetchDatasetList = () => {
-  const token = user.getToken ? user.getToken() : localStorage.getItem('token')
+  const token: string | undefined = localStorage.getItem('token') ?? undefined
   if (!token) {
     return
   }
@@ -1029,7 +1030,7 @@ const submitDatasetForm = async () => {
     return
   }
   aiDatasetSubmitting.value = true
-  const token = user.getToken ? user.getToken() : localStorage.getItem('token')
+  const token: string | undefined = localStorage.getItem('token') ?? undefined
   const payload = {
     name,
     desc,
