@@ -371,7 +371,7 @@ const emit = defineEmits(['import-success'])
 const API_URL = import.meta.env.VITE_OPENAI_CHAT_URL || '/api/OpenAIchat'
 const TEMPLATE_LIST_URL = import.meta.env.VITE_TEMPLATE_LIST_URL || '/list_files'
 const TEMPLATE_DOWNLOAD_BASE =
-  (import.meta.env.VITE_TEMPLATE_DOWNLOAD_BASE as string | undefined) || 'http://47.85.38.66:7005/'
+  (import.meta.env.VITE_TEMPLATE_DOWNLOAD_BASE as string | undefined) || '/'
 const DATASET_API_BASE =
   (import.meta.env.VITE_DATASET_API_BASE as string | undefined) || 'http://localhost:8080/api'
 const APPLICATION_API_BASE =
