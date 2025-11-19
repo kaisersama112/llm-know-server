@@ -911,4 +911,7 @@ onUnmounted(() => {
 .chat-pc__left p{
   color: #ddd;
 }
+.el-button.is-text{
+  color: #ffffff;
+}
 </style>
