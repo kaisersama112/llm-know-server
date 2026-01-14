@@ -118,13 +118,6 @@
         <el-input
             ref="quickInputRef"
             v-model="inputValue"
-            :placeholder="
-            startRecorderTime
-              ? `${$t('chat.inputPlaceholder.speaking')}...`
-              : recorderLoading
-                ? `${$t('chat.inputPlaceholder.recorderLoading')}...`
-                : $t('chat.inputPlaceholder.default')
-          "
             :autosize="{ minRows: 1, maxRows: isMobile ? 4 : 10 }"
             type="textarea"
             :maxlength="100000"
@@ -147,6 +140,7 @@
                   effect="dark"
                   placement="top"
                   popper-class="upload-tooltip-width"
+                  :disabled="true"
               >
                 <template #content>
                   <div class="break-all pre-wrap">
@@ -160,7 +154,7 @@
                     }}：{{ getAcceptList().replace(/\./g, '').replace(/,/g, '、').toUpperCase() }}
                   </div>
                 </template>
-                <el-button text :disabled="checkMaxFilesLimit()" class="mt-4">
+                <el-button text :disabled="checkMaxFilesLimit()" class="mt-4 icon-button-black">
                   <el-icon><Paperclip/></el-icon>
                 </el-button>
               </el-tooltip>
@@ -169,7 +163,7 @@
           </span>
           <!-- 语音输入 -->
           <span v-if="props.applicationDetails.stt_model_enable" class="flex align-center">
-            <el-button text @click="startRecording" v-if="mediaRecorderStatus">
+            <el-button text @click="startRecording" v-if="mediaRecorderStatus" class="icon-button-black">
               <el-icon>
                 <Microphone/>
               </el-icon>
@@ -179,7 +173,13 @@
               <el-text type="info"
               >00:{{ recorderTime < 10 ? `0${recorderTime}` : recorderTime }}</el-text
               >
-              <el-button text type="primary" @click="stopRecording" :loading="recorderLoading">
+              <el-button
+                  text
+                  type="primary"
+                  @click="stopRecording"
+                  :loading="recorderLoading"
+                  class="icon-button-black"
+              >
                 <AppIcon iconName="app-video-stop"></AppIcon>
               </el-button>
             </div>
@@ -637,7 +637,15 @@ onMounted(() => {
 .ai-chat__operate .operate-textarea {
   box-shadow: none;
   background: #FFFFFF;
-  border-radius:0 !important;
+  border-radius: 16px;
+  overflow: hidden;
 
+}
+
+.ai-chat__operate .icon-button-black {
+  color: #000000;
+  --el-button-text-color: #000000;
+  --el-button-hover-text-color: #000000;
+  --el-button-active-text-color: #000000;
 }
 </style>

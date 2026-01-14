@@ -2,7 +2,7 @@
   <div class="call-container">
     <!-- 品牌标识 -->
     <div class="brand-logo">
-      <span class="logo-text">sponge</span>
+      <span class="logo-text">Call</span>
       <span class="logo-ai">AI</span>
     </div>
 
@@ -23,7 +23,7 @@
         </div>
       </div>
       <div class="call-status">
-        {{ isCalling ? '通话中...' : '等待通话开始' }}
+        {{ isCalling ? 'In call...' : 'Waiting to start call' }}
       </div>
       <div class="ai-response-container" v-if="isCalling">
         <div class="ai-response-text" v-if="aiResponseText.length > 0">
@@ -45,13 +45,13 @@
       <template v-if="!isCalling">
         <button @click="startCall" class="call-button-audio start">
           <span class="button-icon">📞</span>
-          <span class="button-text">开始通话</span>
+          <span class="button-text">Start Call</span>
         </button>
       </template>
       <template v-else>
         <button @click="endCall" class="call-button-audio end">
           <span class="button-icon">📞</span>
-          <span class="button-text">结束通话</span>
+          <span class="button-text">End Call</span>
         </button>
       </template>
     </div>

@@ -1,10 +1,11 @@
 <template>
-  <div>
-    <el-text type="info">
-      <span class="ml-4">{{ datetimeFormat(data.create_time) }}</span>
-    </el-text>
-  </div>
-  <div>
+  <div class="chat-operation">
+    <div class="chat-operation__meta">
+      <el-text type="info">
+        <span class="ml-4">{{ datetimeFormat(data.create_time) }}</span>
+      </el-text>
+    </div>
+    <div class="chat-operation__actions">
     <!-- 语音播放 -->
     <span v-if="tts">
       <el-tooltip effect="dark" :content="$t('chat.operation.play')" placement="top" v-if="!audioPlayerStatus">
@@ -74,6 +75,7 @@
         </el-button>
       </el-tooltip>
     </span>
+    </div>
   </div>
   <!-- 先渲染，不然不能播放   -->
   <audio ref="audioPlayer" v-for="item in audioList" :key="item" controls hidden="hidden"></audio>
@@ -289,4 +291,17 @@ onMounted(() => {
   }
 })
 </script>
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.chat-operation :deep(.el-text),
+.chat-operation :deep(.el-text--info) {
+  color: #fff;
+}
+
+.chat-operation :deep(.el-button--text),
+.chat-operation :deep(.el-button--text .el-icon),
+.chat-operation :deep(.el-button--text .app-icon),
+.chat-operation :deep(.el-icon),
+.chat-operation :deep(.app-icon) {
+  color: #fff;
+}
+</style>

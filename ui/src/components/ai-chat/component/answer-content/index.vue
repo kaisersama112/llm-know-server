@@ -2,8 +2,21 @@
   <div class="item-content mb-16 lighter">
     <template v-for="(answer_text, index) in answer_text_list" :key="index">
       <div class="avatar">
-        <img v-if="application.avatar" :src="application.avatar" height="32px" width="32px" />
-        <LogoIcon v-else height="32px" width="32px" />
+        <AppAvatar
+          v-if="isAppIcon(application?.icon)"
+          shape="square"
+          :size="32"
+          style="background: none"
+        >
+          <img :src="application?.icon" alt="" />
+        </AppAvatar>
+        <AppAvatar
+          v-else-if="application?.name"
+          :name="application?.name"
+          pinyinColor
+          shape="square"
+          :size="32"
+        />
       </div>
       <div class="content" @mouseup="openControl">
         <el-card shadow="always" class="mb-8 border-r-8">
@@ -61,6 +74,7 @@ import OperationButton from '@/components/ai-chat/component/operation-button/ind
 import { type chatType } from '@/api/type/application'
 import { computed } from 'vue'
 import bus from '@/bus'
+import { isAppIcon } from '@/utils/application'
 const props = defineProps<{
   chatRecord: chatType
   application: any

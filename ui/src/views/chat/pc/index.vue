@@ -10,7 +10,9 @@
   >
 
     <div class="chat-pc__header" :style="customStyle">
-      <div class="flex align-center">
+      <div class="flex align-center flex-black">
+        <!-- Avatar removed; restore by uncommenting the block below. -->
+        <!--
         <div class="mr-12 ml-24 flex">
           <AppAvatar
               v-if="isAppIcon(applicationDetail?.icon)"
@@ -28,11 +30,12 @@
               :size="32"
           />
         </div>
-        <h4>{{ applicationDetail?.name }}</h4>
+        -->
+        <h4 style="padding-left: 62px">{{ applicationDetail?.name }}</h4>
       </div>
     </div>
     <div>
-      <div class="flex">
+      <div class="flex flex-black">
         <div class="chat-pc__left border-r">
           <div class="p-24 pb-0">
             <el-button class="add-button w-full primary" @click="newChat">
@@ -107,12 +110,12 @@
           </div>
         </div>
         <div class="chat-pc__right">
-          <div class="right-header border-b mb-24 p-16-24 flex-between">
-            <h4 class="ellipsis-1" style="width: 66%">
+          <div class="right-header mb-24 p-16-24 flex-between">
+            <!-- <h4 v-if="showChatTitle" class="ellipsis-1" style="width: 66%">
               {{ currentChatName }}
-            </h4>
+            </h4> -->
 
-            <span class="flex align-center" v-if="currentRecordList.length">
+            <!-- <span class="flex align-center flex-black" v-if="currentRecordList.length">
               <AppIcon
                   v-if="paginationConfig.total"
                   iconName="app-chat-record"
@@ -139,7 +142,7 @@
                   </el-dropdown-menu>
                 </template>
               </el-dropdown>
-            </span>
+            </span> -->
           </div>
 
           <div class="right-height chat-width">
@@ -181,10 +184,23 @@
       </div>
       <div class="collapse">
 
-        <el-button @click="isCollapse = !isCollapse">
-          <el-icon color="#409EFF">
-            <component :is="isCollapse ? 'Fold' : 'Expand'"/>
-          </el-icon>
+        <el-button class="collapse-button" @click="isCollapse = !isCollapse">
+          <svg
+            t="1768359358707"
+            class="icon"
+            viewBox="0 0 1024 1024"
+            version="1.1"
+            xmlns="http://www.w3.org/2000/svg"
+            p-id="4874"
+            width="20"
+            height="20"
+          >
+            <path
+              d="M170.666667 213.333333h682.666666v85.333334H170.666667V213.333333z m0 512h682.666666v85.333334H170.666667v-85.333334z m0-256h682.666666v85.333334H170.666667v-85.333334z"
+              fill="#ffffff"
+              p-id="4875"
+            ></path>
+          </svg>
         </el-button>
       </div>
     </div>
@@ -204,11 +220,13 @@ import useResize from '@/layout/hooks/useResize'
 import {hexToRgba} from '@/utils/theme'
 import EditTitleDialog from './EditTitleDialog.vue'
 import AiAudio from "./AiAudio.vue";
-import {t} from '@/locales'
+import {t, i18n} from '@/locales'
 
 useResize()
 
 const {user, log, common} = useStore()
+const previousLocale = ref(i18n.global.locale.value)
+const shouldRestoreLocale = ref(false)
 // 语音通话
 const showCallModal = ref(false);
 const callButtonRef = ref<HTMLButtonElement | null>(null)
@@ -433,6 +451,7 @@ const paginationConfig = ref({
 const currentRecordList = ref<any>([])
 const currentChatId = ref('new') // 当前历史记录Id 默认为'new'
 const currentChatName = ref(t('chat.createChat'))
+const showChatTitle = computed(() => currentChatName.value !== t('chat.createChat'))
 const mouseId = ref('')
 
 function mouseenter(row: any) {
@@ -605,6 +624,15 @@ const init = () => {
   }
 }
 onMounted(() => {
+  if (i18n.global.locale.value !== 'en-US') {
+    previousLocale.value = i18n.global.locale.value
+    i18n.global.locale.value = 'en-US'
+    shouldRestoreLocale.value = true
+    newObj.abstract = t('chat.createChat')
+    if (currentChatId.value === 'new') {
+      currentChatName.value = t('chat.createChat')
+    }
+  }
   init()
   if (typeof window !== 'undefined') {
     const {top, left} = resolveInitialButtonPosition()
@@ -615,6 +643,9 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  if (shouldRestoreLocale.value) {
+    i18n.global.locale.value = previousLocale.value
+  }
   clearPressTimer()
   if (typeof window !== 'undefined') {
     window.removeEventListener('pointermove', handlePointerMove)
@@ -632,7 +663,7 @@ onUnmounted(() => {
   overflow: hidden;
 
   &__header {
-    background: var(--app-header-bg-color);
+    background: #232F3E !important;
     position: fixed;
     width: 100%;
     left: 0;
@@ -701,8 +732,61 @@ onUnmounted(() => {
     }
   }
 
-  .collapse {
-    display: none;
+.collapse {
+  display: none;
+}
+}
+
+.collapse .collapse-button {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(64, 138, 255, 0.18);
+  box-shadow: none;
+  overflow: hidden;
+  transition: transform 0.15s ease;
+}
+
+.collapse .collapse-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.collapse .collapse-button:active {
+  transform: scale(1.05);
+}
+
+.collapse .collapse-button::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+}
+
+.collapse .collapse-button:active::after {
+  animation: collapse-ripple 0.45s ease-out;
+}
+
+@keyframes collapse-ripple {
+  0% {
+    width: 0;
+    height: 0;
+    opacity: 0.4;
+  }
+  100% {
+    width: 120%;
+    height: 120%;
+    opacity: 0;
   }
 }
 
@@ -760,8 +844,11 @@ onUnmounted(() => {
 }
 
 .flex {
-  // background: #FFFFFF;
-  background: #232F3E;
+  background: #FFFFFF;
+  // background: #232F3E;
+}
+.flex-black{
+    background: #232F3E !important;
 }
 
 /* 悬浮按钮 */
@@ -912,6 +999,6 @@ onUnmounted(() => {
   color: #ddd;
 }
 .el-button.is-text{
-  color: #ffffff;
+  color: #000;
 }
 </style>

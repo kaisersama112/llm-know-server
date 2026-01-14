@@ -3,8 +3,21 @@
 
   <div class="item-content mb-16">
     <div class="avatar" v-if="prologue">
-      <img v-if="application.avatar" :src="application.avatar" height="32px" width="32px"/>
-      <LogoIcon v-else height="32px" width="32px"/>
+      <AppAvatar
+        v-if="isAppIcon(application?.icon)"
+        shape="square"
+        :size="32"
+        style="background: none"
+      >
+        <img :src="application?.icon" alt="" />
+      </AppAvatar>
+      <AppAvatar
+        v-else-if="application?.name"
+        :name="application?.name"
+        pinyinColor
+        shape="square"
+        :size="32"
+      />
     </div>
 
     <div class="content" v-if="prologue">
@@ -26,6 +39,7 @@ import {type chatType} from '@/api/type/application'
 import {computed} from 'vue'
 import MdRenderer from '@/components/markdown/MdRenderer.vue'
 import {t} from '@/locales'
+import {isAppIcon} from '@/utils/application'
 
 const props = defineProps<{
   application: any
