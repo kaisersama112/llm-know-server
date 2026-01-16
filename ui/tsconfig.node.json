@@ -9,8 +9,10 @@
   ],
   "compilerOptions": {
     "composite": true,
+      "target": "ES2021",
+    "lib": ["ES2021", "DOM", "DOM.Iterable"],
     "module": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "Bundler",
     "skipLibCheck": true, // 跳过node依赖包语法检查
     "types": [
       "node"

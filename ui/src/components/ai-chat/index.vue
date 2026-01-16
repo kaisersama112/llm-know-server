@@ -1,5 +1,10 @@
 <template>
-  <div ref="aiChatRef" class="ai-chat" :class="type">
+  <div
+    ref="aiChatRef"
+    class="ai-chat"
+    :class="type"
+    :style="{ '--keyboard-offset': `${keyboardOffset}px` }"
+  >
     <UserForm
         v-model:api_form_data="api_form_data"
         v-model:form_data="form_data"
@@ -115,6 +120,31 @@ const chatList = ref<any[]>([])
 const form_data = ref<any>({})
 const api_form_data = ref<any>({})
 const userFormRef = ref<InstanceType<typeof UserForm>>()
+const keyboardOffset = ref(0)
+const baseInnerHeight = ref(0)
+const IME_BAR_HEIGHT = 60
+const EXTRA_KEYBOARD_OFFSET = 150
+
+const updateKeyboardOffset = () => {
+  if (typeof window === 'undefined') return
+  const viewport = window.visualViewport
+  let offset = 0
+  if (viewport) {
+    offset = Math.max(0, window.innerHeight - (viewport.height + viewport.offsetTop))
+  }
+  if (baseInnerHeight.value) {
+    offset = Math.max(offset, baseInnerHeight.value - window.innerHeight)
+  }
+  const adjustedOffset = Math.max(0, offset - IME_BAR_HEIGHT - EXTRA_KEYBOARD_OFFSET)
+  keyboardOffset.value = adjustedOffset
+  if (adjustedOffset > 0 && scorll.value) {
+    nextTick(() => {
+      if (scrollDiv.value) {
+        setScrollBottom()
+      }
+    })
+  }
+}
 watch(
     () => props.chatId,
     (val) => {
@@ -453,10 +483,28 @@ const handleScroll = () => {
 
 onMounted(() => {
   window.sendMessage = sendMessage
+  if (typeof window !== 'undefined') {
+    baseInnerHeight.value = window.innerHeight
+  }
+  updateKeyboardOffset()
+  if (typeof window !== 'undefined') {
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', updateKeyboardOffset)
+      window.visualViewport.addEventListener('scroll', updateKeyboardOffset)
+    }
+    window.addEventListener('resize', updateKeyboardOffset)
+  }
 })
 
 onBeforeUnmount(() => {
   window.sendMessage = null
+  if (typeof window !== 'undefined') {
+    if (window.visualViewport) {
+      window.visualViewport.removeEventListener('resize', updateKeyboardOffset)
+      window.visualViewport.removeEventListener('scroll', updateKeyboardOffset)
+    }
+    window.removeEventListener('resize', updateKeyboardOffset)
+  }
 })
 
 function setScrollBottom() {

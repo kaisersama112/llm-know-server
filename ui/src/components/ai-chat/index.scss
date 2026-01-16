@@ -10,6 +10,7 @@
   &__content {
     padding-top: 0;
     box-sizing: border-box;
+    padding-bottom: calc(24px + var(--keyboard-offset, 0px));
 
     .avatar {
       float: left;

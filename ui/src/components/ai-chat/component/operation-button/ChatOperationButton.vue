@@ -2,7 +2,7 @@
   <div class="chat-operation">
     <div class="chat-operation__meta">
       <el-text type="info">
-        <span class="ml-4">{{ datetimeFormat(data.create_time) }}</span>
+        <span class="ml-4">{{ formatChatDatetime(data.create_time) }}</span>
       </el-text>
     </div>
     <div class="chat-operation__actions">
@@ -85,7 +85,6 @@ import { nextTick, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { copyClick } from '@/utils/clipboard'
 import applicationApi from '@/api/application'
-import { datetimeFormat } from '@/utils/time'
 import { MsgError } from '@/utils/message'
 import { t } from '@/locales'
 import bus from '@/bus'
@@ -120,6 +119,20 @@ const loading = ref(false)
 const utterance = ref<SpeechSynthesisUtterance | null>(null)
 const audioList = ref<string[]>([])
 const currentAudioIndex = ref(0)
+
+const formatChatDatetime = (timestamp: any) => {
+  const dt = new Date(timestamp)
+  if (Number.isNaN(dt.getTime())) {
+    return timestamp
+  }
+  const m = String(dt.getMonth() + 1).padStart(2, '0')
+  const d = String(dt.getDate()).padStart(2, '0')
+  const y = dt.getFullYear()
+  const hh = String(dt.getHours()).padStart(2, '0')
+  const mm = String(dt.getMinutes()).padStart(2, '0')
+  const ss = String(dt.getSeconds()).padStart(2, '0')
+  return `${m}/${d}/${y} ${hh}:${mm}:${ss}`
+}
 
 function regeneration() {
   emit('regeneration')

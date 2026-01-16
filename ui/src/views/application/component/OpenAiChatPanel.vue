@@ -1314,10 +1314,10 @@ const appApiUrl = (path: string) => {
 
 const escapeHtml = (value: string) => {
   return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('\n', '<br/>')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\n/g, '<br/>')
 }
 
 const scrollToBottom = () => {

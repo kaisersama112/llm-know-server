@@ -110,7 +110,7 @@
           </div>
         </div>
         <div class="chat-pc__right">
-          <div class="right-header mb-24 p-16-24 flex-between">
+          <div class="right-header mb-24 flex-between">
             <!-- <h4 v-if="showChatTitle" class="ellipsis-1" style="width: 66%">
               {{ currentChatName }}
             </h4> -->
@@ -702,7 +702,7 @@ onUnmounted(() => {
     }
 
     .right-height {
-      height: calc(100vh - var(--app-header-height) * 2 - 24px);
+      height: calc(106vh - var(--app-header-height) * 2 - 24px);
     }
   }
 
