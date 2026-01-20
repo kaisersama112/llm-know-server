@@ -80,6 +80,32 @@ const init_data_end = ref<boolean>(false)
 
 const applicationAvailable = ref<boolean>(true)
 const CHAT_VIEWPORT_CLASS = 'chat-page-lock'
+const CHAT_VIEWPORT_VAR = '--chat-viewport-height'
+
+const isIOSSafari = (() => {
+  if (typeof window === 'undefined') return false
+  const ua = window.navigator.userAgent
+  const isIOS =
+    /iP(hone|ad|od)/.test(ua) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+  return isIOS && /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS/.test(ua)
+})()
+
+let chatViewportRafId = 0
+
+const applyChatViewportHeight = () => {
+  if (!isIOSSafari || typeof window === 'undefined') return
+  document.documentElement.style.setProperty(CHAT_VIEWPORT_VAR, `${window.innerHeight}px`)
+}
+
+const scheduleChatViewportHeight = () => {
+  if (!isIOSSafari || typeof window === 'undefined') return
+  if (chatViewportRafId) return
+  chatViewportRafId = window.requestAnimationFrame(() => {
+    chatViewportRafId = 0
+    applyChatViewportHeight()
+  })
+}
 
 const applyChatViewportLock = () => {
   if (typeof document === 'undefined') return
@@ -91,6 +117,11 @@ const removeChatViewportLock = () => {
   if (typeof document === 'undefined') return
   document.documentElement.classList.remove(CHAT_VIEWPORT_CLASS)
   document.body.classList.remove(CHAT_VIEWPORT_CLASS)
+}
+
+const clearChatViewportHeight = () => {
+  if (typeof document === 'undefined') return
+  document.documentElement.style.removeProperty(CHAT_VIEWPORT_VAR)
 }
 function getAppProfile() {
   return application.asyncGetAppProfile(loading).then((res: any) => {
@@ -115,10 +146,22 @@ onBeforeMount(() => {
 
 onMounted(() => {
   applyChatViewportLock()
+  if (isIOSSafari) {
+    applyChatViewportHeight()
+    window.addEventListener('resize', scheduleChatViewportHeight)
+  }
 })
 
 onBeforeUnmount(() => {
   removeChatViewportLock()
+  if (isIOSSafari) {
+    window.removeEventListener('resize', scheduleChatViewportHeight)
+    clearChatViewportHeight()
+  }
+  if (chatViewportRafId) {
+    window.cancelAnimationFrame(chatViewportRafId)
+    chatViewportRafId = 0
+  }
 })
 </script>
 <style lang="scss"></style>

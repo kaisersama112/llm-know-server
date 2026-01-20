@@ -687,7 +687,10 @@ onUnmounted(() => {
     }
 
     .left-height {
-      height: calc(var(--app-viewport-height, 100vh) - var(--app-header-height) - 135px);
+      height: calc(
+        var(--chat-viewport-height, var(--app-viewport-height, 100vh)) -
+          var(--app-header-height) - 135px
+      );
     }
   }
 
@@ -704,7 +707,10 @@ onUnmounted(() => {
     }
 
     .right-height {
-      height: calc(var(--app-viewport-height, 100vh) - var(--app-header-height) * 2 - 24px);
+      height: calc(
+        var(--chat-viewport-height, var(--app-viewport-height, 100vh)) -
+          var(--app-header-height) * 2 - 24px
+      );
     }
   }
 
@@ -819,7 +825,10 @@ onUnmounted(() => {
         position: fixed;
         width: 100%;
         z-index: 99;
-        height: calc(var(--app-viewport-height, 100vh) - var(--app-header-height) + 6px);
+        height: calc(
+          var(--chat-viewport-height, var(--app-viewport-height, 100vh)) -
+            var(--app-header-height) + 6px
+        );
       }
     }
 

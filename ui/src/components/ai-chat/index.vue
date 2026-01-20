@@ -2,7 +2,7 @@
   <div
     ref="aiChatRef"
     class="ai-chat"
-    :class="type"
+    :class="[type, { 'ios-safari': isIosSafari }]"
   >
     <UserForm
         v-model:api_form_data="api_form_data"
@@ -131,6 +131,8 @@ const navBarPx = ref(0)
 const hasNavBar = ref(false)
 const isNativeIos = ref(false)
 const baseInnerHeight = ref(0)
+const iosKeyboardPx = ref(0)
+const isInputFocused = ref(false)
 const isIosSafari = (() => {
   if (typeof window === 'undefined') return false
   const ua = window.navigator.userAgent
@@ -149,6 +151,8 @@ let androidKeyboardDriven = false
 let composerResizeObserver: ResizeObserver | null = null
 let lastKeyboardShift = 0
 let focusScrollTimer = 0
+let iosViewportRafId = 0
+let stickToBottomRafId = 0
 
 const getComposerElement = () => {
   return (composerRef.value?.$el || composerRef.value) as HTMLElement | undefined
@@ -181,8 +185,11 @@ const scheduleComposerIntoView = () => {
 }
 
 const keyboardShiftPx = computed(() => {
-  if (isNativeIos.value || isIosSafari) {
+  if (isNativeIos.value) {
     return 0
+  }
+  if (isIosSafari) {
+    return iosKeyboardPx.value
   }
   const base = keyboardOffsetPx.value
   // Only add the nav bar when present so gesture-only devices stay at the base shift.
@@ -291,6 +298,46 @@ const handleNativeInsets = (payload: NativeInsetsPayload) => {
   androidKeyboardDriven = true
   const imeHeight = payload.visibleIme ? payload.ime || 0 : 0
   setKeyboardTarget(imeHeight)
+}
+
+const isNearBottom = () => {
+  const wrap = scrollDiv.value?.wrapRef
+  const dialog = dialogScrollbar.value
+  if (!wrap || !dialog) return true
+  const threshold = 48
+  return dialog.scrollHeight - (wrap.scrollTop + wrap.offsetHeight) <= threshold
+}
+
+const scheduleStickToBottom = () => {
+  if (typeof window === 'undefined' || stickToBottomRafId || !scrollDiv.value) return
+  stickToBottomRafId = requestAnimationFrame(() => {
+    stickToBottomRafId = 0
+    if (scrollDiv.value) {
+      scrollDiv.value.setScrollTop(getMaxHeight())
+    }
+  })
+}
+
+const updateIosKeyboardOffset = () => {
+  if (typeof window === 'undefined' || !isIosSafari) return
+  const viewport = window.visualViewport
+  let overlap = 0
+  if (viewport) {
+    overlap = Math.max(0, window.innerHeight - (viewport.height + viewport.offsetTop))
+  }
+  iosKeyboardPx.value = overlap
+  if (isInputFocused.value || isNearBottom()) {
+    scheduleStickToBottom()
+  }
+}
+
+const handleIosViewportChange = () => {
+  if (typeof window === 'undefined' || !isIosSafari) return
+  if (iosViewportRafId) return
+  iosViewportRafId = requestAnimationFrame(() => {
+    iosViewportRafId = 0
+    updateIosKeyboardOffset()
+  })
 }
 watch(
     () => props.chatId,
@@ -655,8 +702,18 @@ onMounted(() => {
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', updateKeyboardOffset)
       window.visualViewport.addEventListener('scroll', updateKeyboardOffset)
+      if (isIosSafari) {
+        window.visualViewport.addEventListener('resize', handleIosViewportChange, {passive: true})
+        window.visualViewport.addEventListener('scroll', handleIosViewportChange, {passive: true})
+      }
     }
     window.addEventListener('resize', updateKeyboardOffset)
+    if (isIosSafari) {
+      window.addEventListener('resize', handleIosViewportChange)
+    }
+  }
+  if (isIosSafari) {
+    updateIosKeyboardOffset()
   }
 })
 
@@ -666,8 +723,15 @@ onBeforeUnmount(() => {
     if (window.visualViewport) {
       window.visualViewport.removeEventListener('resize', updateKeyboardOffset)
       window.visualViewport.removeEventListener('scroll', updateKeyboardOffset)
+      if (isIosSafari) {
+        window.visualViewport.removeEventListener('resize', handleIosViewportChange)
+        window.visualViewport.removeEventListener('scroll', handleIosViewportChange)
+      }
     }
     window.removeEventListener('resize', updateKeyboardOffset)
+    if (isIosSafari) {
+      window.removeEventListener('resize', handleIosViewportChange)
+    }
     if (keyboardRafId) {
       cancelAnimationFrame(keyboardRafId)
       keyboardRafId = 0
@@ -688,6 +752,14 @@ onBeforeUnmount(() => {
     window.clearTimeout(focusScrollTimer)
     focusScrollTimer = 0
   }
+  if (iosViewportRafId) {
+    cancelAnimationFrame(iosViewportRafId)
+    iosViewportRafId = 0
+  }
+  if (stickToBottomRafId) {
+    cancelAnimationFrame(stickToBottomRafId)
+    stickToBottomRafId = 0
+  }
 })
 
 function setScrollBottom() {
@@ -696,6 +768,7 @@ function setScrollBottom() {
 }
 
 const handleInputFocus = () => {
+  isInputFocused.value = true
   if (isNativeIos.value || isIosSafari) {
     nextTick(() => {
       if (scrollDiv.value) {
@@ -720,6 +793,7 @@ const handleInputFocus = () => {
   })
 }
 const handleInputBlur = () => {
+  isInputFocused.value = false
   if (isNativeIos.value || isIosSafari) {
     if (focusScrollTimer) {
       window.clearTimeout(focusScrollTimer)

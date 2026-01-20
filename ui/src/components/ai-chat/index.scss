@@ -99,6 +99,17 @@
       }
     }
   }
+
+  &.ios-safari {
+    .ai-chat__content {
+      transition: padding-bottom 220ms cubic-bezier(0.2, 0, 0.2, 1);
+    }
+
+    .ai-chat__operate {
+      transition: transform 220ms cubic-bezier(0.2, 0, 0.2, 1);
+      will-change: transform;
+    }
+  }
 }
 
 .chat-width {
