@@ -63,6 +63,14 @@
         <slot name="operateBefore"/>
       </template>
     </ChatInputOperate>
+    <div
+        v-if="isIosSafari && hasNewMessages"
+        class="ai-chat__new-msg"
+        :style="newMessageStyle"
+        @click="handleNewMessagesClick"
+    >
+      New messages
+    </div>
     <Control></Control>
 
 
@@ -132,16 +140,10 @@ const hasNavBar = ref(false)
 const isNativeIos = ref(false)
 const baseInnerHeight = ref(0)
 const iosKeyboardPx = ref(0)
-const isInputFocused = ref(false)
 const isIosSafari = (() => {
   if (typeof window === 'undefined') return false
   const ua = window.navigator.userAgent
-  const isIOS =
-      /iP(hone|od|ad)/.test(ua) ||
-      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-  const isSafari =
-      /Safari/.test(ua) && !/Chrome|CriOS|FxiOS|EdgiOS|OPiOS/.test(ua)
-  return isIOS && isSafari
+  return /iP(hone|ad|od)/.test(ua) && /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS/.test(ua)
 })()
 const IME_BAR_HEIGHT = 60
 const EXTRA_KEYBOARD_OFFSET = 150
@@ -153,6 +155,9 @@ let lastKeyboardShift = 0
 let focusScrollTimer = 0
 let iosViewportRafId = 0
 let stickToBottomRafId = 0
+const pinnedToBottom = ref(true)
+const hasNewMessages = ref(false)
+let lastBottomId = ''
 
 const getComposerElement = () => {
   return (composerRef.value?.$el || composerRef.value) as HTMLElement | undefined
@@ -197,6 +202,11 @@ const keyboardShiftPx = computed(() => {
 })
 
 const contentStyle = computed(() => {
+  if (isIosSafari) {
+    return {
+      paddingBottom: `calc(${composerHeight.value}px + var(--kb, 0px))`
+    }
+  }
   const offset = Math.max(0, composerHeight.value + keyboardShiftPx.value)
   return {
     paddingBottom: `${offset}px`
@@ -204,8 +214,23 @@ const contentStyle = computed(() => {
 })
 
 const composerStyle = computed(() => {
+  if (isIosSafari) {
+    return {
+      transform: `translate3d(0, calc(-1 * var(--kb, 0px)), 0)`
+    }
+  }
   return {
     transform: `translateY(-${keyboardShiftPx.value}px)`
+  }
+})
+
+const newMessageStyle = computed(() => {
+  if (!isIosSafari) {
+    return {}
+  }
+  const composerPx = composerHeight.value || 0
+  return {
+    bottom: `calc(var(--kb, 0px) + ${composerPx}px + 12px)`
   }
 })
 
@@ -304,17 +329,22 @@ const isNearBottom = () => {
   const wrap = scrollDiv.value?.wrapRef
   const dialog = dialogScrollbar.value
   if (!wrap || !dialog) return true
-  const threshold = 48
+  const threshold = 64
   return dialog.scrollHeight - (wrap.scrollTop + wrap.offsetHeight) <= threshold
 }
 
 const scheduleStickToBottom = () => {
   if (typeof window === 'undefined' || stickToBottomRafId || !scrollDiv.value) return
   stickToBottomRafId = requestAnimationFrame(() => {
-    stickToBottomRafId = 0
     if (scrollDiv.value) {
       scrollDiv.value.setScrollTop(getMaxHeight())
     }
+    stickToBottomRafId = requestAnimationFrame(() => {
+      stickToBottomRafId = 0
+      if (scrollDiv.value) {
+        scrollDiv.value.setScrollTop(getMaxHeight())
+      }
+    })
   })
 }
 
@@ -326,7 +356,10 @@ const updateIosKeyboardOffset = () => {
     overlap = Math.max(0, window.innerHeight - (viewport.height + viewport.offsetTop))
   }
   iosKeyboardPx.value = overlap
-  if (isInputFocused.value || isNearBottom()) {
+  if (typeof document !== 'undefined') {
+    document.documentElement.style.setProperty('--kb', `${overlap}px`)
+  }
+  if (pinnedToBottom.value) {
     scheduleStickToBottom()
   }
 }
@@ -366,6 +399,34 @@ watch(
     },
     {
       immediate: true
+    }
+)
+
+watch(
+    () => chatList.value.length,
+    (nextLength, prevLength) => {
+      if (!isIosSafari) {
+        return
+      }
+      const lastItem = chatList.value[chatList.value.length - 1]
+      const nextBottomId = lastItem?.id || lastItem?.record_id || lastItem?.chat_id || ''
+      if (typeof prevLength === 'undefined') {
+        lastBottomId = nextBottomId
+        return
+      }
+      if (nextBottomId && lastBottomId && nextBottomId === lastBottomId) {
+        return
+      }
+      lastBottomId = nextBottomId
+      if (nextLength > prevLength) {
+        if (pinnedToBottom.value) {
+          scheduleStickToBottom()
+        } else {
+          hasNewMessages.value = true
+        }
+      } else {
+        lastBottomId = nextBottomId
+      }
     }
 )
 
@@ -661,6 +722,13 @@ const handleScrollTop = ($event: any) => {
   } else {
     scorll.value = false
   }
+  if (isIosSafari) {
+    const atBottom = isNearBottom()
+    pinnedToBottom.value = atBottom
+    if (atBottom) {
+      hasNewMessages.value = false
+    }
+  }
   emit('scroll', {...$event, dialogScrollbar: dialogScrollbar.value, scrollDiv: scrollDiv.value})
 }
 /**
@@ -760,6 +828,9 @@ onBeforeUnmount(() => {
     cancelAnimationFrame(stickToBottomRafId)
     stickToBottomRafId = 0
   }
+  if (isIosSafari && typeof document !== 'undefined') {
+    document.documentElement.style.removeProperty('--kb')
+  }
 })
 
 function setScrollBottom() {
@@ -768,14 +839,21 @@ function setScrollBottom() {
 }
 
 const handleInputFocus = () => {
-  isInputFocused.value = true
   if (isNativeIos.value || isIosSafari) {
     nextTick(() => {
-      if (scrollDiv.value) {
+      const shouldStick = pinnedToBottom.value || isNearBottom()
+      if (scrollDiv.value && shouldStick) {
         setScrollBottom()
       }
       scheduleComposerIntoView()
     })
+    if (isIosSafari) {
+      if (pinnedToBottom.value || isNearBottom()) {
+        pinnedToBottom.value = true
+        hasNewMessages.value = false
+        scheduleStickToBottom()
+      }
+    }
     return
   }
   keyboardAnimationEnabled = false
@@ -793,7 +871,6 @@ const handleInputFocus = () => {
   })
 }
 const handleInputBlur = () => {
-  isInputFocused.value = false
   if (isNativeIos.value || isIosSafari) {
     if (focusScrollTimer) {
       window.clearTimeout(focusScrollTimer)
@@ -801,6 +878,13 @@ const handleInputBlur = () => {
     }
     return
   }
+}
+
+const handleNewMessagesClick = () => {
+  if (!isIosSafari) return
+  hasNewMessages.value = false
+  pinnedToBottom.value = true
+  scheduleStickToBottom()
 }
 
 watch(

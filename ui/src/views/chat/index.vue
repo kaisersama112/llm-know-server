@@ -85,10 +85,7 @@ const CHAT_VIEWPORT_VAR = '--chat-viewport-height'
 const isIOSSafari = (() => {
   if (typeof window === 'undefined') return false
   const ua = window.navigator.userAgent
-  const isIOS =
-    /iP(hone|ad|od)/.test(ua) ||
-    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-  return isIOS && /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS/.test(ua)
+  return /iP(hone|ad|od)/.test(ua) && /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS/.test(ua)
 })()
 
 let chatViewportRafId = 0

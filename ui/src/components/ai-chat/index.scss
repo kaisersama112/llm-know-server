@@ -100,6 +100,22 @@
     }
   }
 
+  &__new-msg {
+    position: absolute;
+    right: 16px;
+    z-index: 20;
+    padding: 6px 10px;
+    font-size: 12px;
+    border-radius: 14px;
+    background: #ffffff;
+    color: var(--app-text-color);
+    border: 1px solid var(--el-border-color);
+    box-shadow: 0px 4px 12px rgba(31, 35, 41, 0.12);
+    cursor: pointer;
+    transition: transform 220ms cubic-bezier(0.2, 0, 0.2, 1),
+      opacity 220ms cubic-bezier(0.2, 0, 0.2, 1);
+  }
+
   &.ios-safari {
     .ai-chat__content {
       transition: padding-bottom 220ms cubic-bezier(0.2, 0, 0.2, 1);
