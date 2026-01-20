@@ -148,6 +148,7 @@ let keyboardAnimationEnabled = true
 let androidKeyboardDriven = false
 let composerResizeObserver: ResizeObserver | null = null
 let lastKeyboardShift = 0
+let focusScrollTimer = 0
 
 const getComposerElement = () => {
   return (composerRef.value?.$el || composerRef.value) as HTMLElement | undefined
@@ -156,6 +157,27 @@ const updateComposerHeight = () => {
   const el = getComposerElement()
   if (!el) return
   composerHeight.value = el.offsetHeight
+}
+
+const scrollComposerIntoView = () => {
+  const el = getComposerElement()
+  if (!el || typeof el.scrollIntoView !== 'function') return
+  try {
+    el.scrollIntoView({block: 'end', inline: 'nearest'})
+  } catch (e) {
+    el.scrollIntoView()
+  }
+}
+
+const scheduleComposerIntoView = () => {
+  if (typeof window === 'undefined') return
+  if (focusScrollTimer) {
+    window.clearTimeout(focusScrollTimer)
+  }
+  focusScrollTimer = window.setTimeout(() => {
+    focusScrollTimer = 0
+    scrollComposerIntoView()
+  }, 60)
 }
 
 const keyboardShiftPx = computed(() => {
@@ -662,6 +684,10 @@ onBeforeUnmount(() => {
     composerResizeObserver.disconnect()
     composerResizeObserver = null
   }
+  if (focusScrollTimer) {
+    window.clearTimeout(focusScrollTimer)
+    focusScrollTimer = 0
+  }
 })
 
 function setScrollBottom() {
@@ -675,6 +701,7 @@ const handleInputFocus = () => {
       if (scrollDiv.value) {
         setScrollBottom()
       }
+      scheduleComposerIntoView()
     })
     return
   }
@@ -694,6 +721,10 @@ const handleInputFocus = () => {
 }
 const handleInputBlur = () => {
   if (isNativeIos.value || isIosSafari) {
+    if (focusScrollTimer) {
+      window.clearTimeout(focusScrollTimer)
+      focusScrollTimer = 0
+    }
     return
   }
 }

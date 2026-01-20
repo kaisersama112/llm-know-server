@@ -75,6 +75,8 @@ function newChat() {
 <style lang="scss">
 .chat {
   overflow: hidden;
+  height: var(--app-viewport-height, 100vh);
+  min-height: var(--app-viewport-height, 100vh);
   &__header {
     background: var(--app-header-bg-color);
     position: fixed;

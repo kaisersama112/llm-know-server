@@ -732,6 +732,10 @@ onMounted(() => {
 
 }
 
+.ai-chat__operate {
+  padding-bottom: calc(var(--app-base-px) * 2 + env(safe-area-inset-bottom));
+}
+
 .ai-chat__operate .icon-button-black {
   color: #000000;
   --el-button-text-color: #000000;

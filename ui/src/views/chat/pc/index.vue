@@ -661,6 +661,8 @@ onUnmounted(() => {
 <style lang="scss">
 .chat-pc {
   overflow: hidden;
+  height: var(--app-viewport-height, 100vh);
+  min-height: var(--app-viewport-height, 100vh);
 
   &__header {
     background: #232F3E !important;

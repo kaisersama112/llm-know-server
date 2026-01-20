@@ -45,22 +45,37 @@ config({
   }
 })
 
-const setViewportHeightVar = () => {
+const DEBUG_VIEWPORT = false
+let viewportRafId = 0
+
+const applyViewportVars = () => {
   if (typeof window === 'undefined') return
   const viewport = window.visualViewport
-  const height = viewport ? viewport.height : window.innerHeight
+  const rawHeight = viewport ? viewport.height : window.innerHeight
+  const offsetTop = viewport ? viewport.offsetTop : 0
+  const height = rawHeight + Math.max(0, offsetTop)
   document.documentElement.style.setProperty('--app-viewport-height', `${height}px`)
+  document.documentElement.style.setProperty('--app-viewport-offset-top', `${offsetTop}px`)
+  if (DEBUG_VIEWPORT) {
+    console.info('[viewport]', {height, offsetTop})
+  }
+}
+
+const scheduleViewportUpdate = () => {
+  if (typeof window === 'undefined') return
+  if (viewportRafId) return
+  viewportRafId = window.requestAnimationFrame(() => {
+    viewportRafId = 0
+    applyViewportVars()
+  })
 }
 
 if (typeof window !== 'undefined') {
-  setViewportHeightVar()
-  const handleViewportResize = () => {
-    setViewportHeightVar()
-  }
-  window.addEventListener('resize', handleViewportResize)
+  applyViewportVars()
+  window.addEventListener('resize', scheduleViewportUpdate)
   if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', handleViewportResize)
-    window.visualViewport.addEventListener('scroll', handleViewportResize)
+    window.visualViewport.addEventListener('resize', scheduleViewportUpdate)
+    window.visualViewport.addEventListener('scroll', scheduleViewportUpdate)
   }
 }
 

@@ -80,3 +80,13 @@ python main.py dev local_model
 python main.py dev celery
 ```
 
+
+#### linux 启动docker
+
+docker stop llm-know-app
+
+docker rm llm-know-app
+
+docker build -t llm-know-app -f installer/Dockerfile .
+
+docker run -d --name llm-know-app --network maxkb-network -p 8080:8080 -p 5432:5432 llm-know-app

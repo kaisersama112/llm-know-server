@@ -19,7 +19,7 @@
   ></Auth>
 </template>
 <script setup lang="ts">
-import { ref, onBeforeMount, computed } from 'vue'
+import { ref, onBeforeMount, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import useStore from '@/stores'
 import Auth from '@/views/chat/auth/index.vue'
@@ -79,6 +79,19 @@ const application_profile = ref<any>({})
 const init_data_end = ref<boolean>(false)
 
 const applicationAvailable = ref<boolean>(true)
+const CHAT_VIEWPORT_CLASS = 'chat-page-lock'
+
+const applyChatViewportLock = () => {
+  if (typeof document === 'undefined') return
+  document.documentElement.classList.add(CHAT_VIEWPORT_CLASS)
+  document.body.classList.add(CHAT_VIEWPORT_CLASS)
+}
+
+const removeChatViewportLock = () => {
+  if (typeof document === 'undefined') return
+  document.documentElement.classList.remove(CHAT_VIEWPORT_CLASS)
+  document.body.classList.remove(CHAT_VIEWPORT_CLASS)
+}
 function getAppProfile() {
   return application.asyncGetAppProfile(loading).then((res: any) => {
     locale.value = res.data?.language || getBrowserLang()
@@ -98,6 +111,14 @@ onBeforeMount(() => {
       applicationAvailable.value = false
     })
     .finally(() => (init_data_end.value = true))
+})
+
+onMounted(() => {
+  applyChatViewportLock()
+})
+
+onBeforeUnmount(() => {
+  removeChatViewportLock()
 })
 </script>
 <style lang="scss"></style>
