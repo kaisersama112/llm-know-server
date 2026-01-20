@@ -3,7 +3,6 @@
     ref="aiChatRef"
     class="ai-chat"
     :class="type"
-    :style="{ '--keyboard-offset': `${keyboardOffset}px` }"
   >
     <UserForm
         v-model:api_form_data="api_form_data"
@@ -14,7 +13,7 @@
     ></UserForm>
 
     <el-scrollbar ref="scrollDiv" @scroll="handleScrollTop">
-      <div ref="dialogScrollbar" class="ai-chat__content p-24">
+      <div ref="dialogScrollbar" class="ai-chat__content p-24" :style="contentStyle">
         <PrologueContent
             :type="type"
             :application="applicationDetails"
@@ -54,6 +53,10 @@
         :chat-management="ChatManagement"
         v-model:chat-id="chartOpenId"
         v-model:loading="loading"
+        @focus="handleInputFocus"
+        @blur="handleInputBlur"
+        ref="composerRef"
+        :style="composerStyle"
         v-if="type !== 'log'"
     >
       <template #operateBefore>
@@ -120,30 +123,152 @@ const chatList = ref<any[]>([])
 const form_data = ref<any>({})
 const api_form_data = ref<any>({})
 const userFormRef = ref<InstanceType<typeof UserForm>>()
-const keyboardOffset = ref(0)
+const composerRef = ref()
+const composerHeight = ref(0)
+const keyboardTargetPx = ref(0)
+const keyboardOffsetPx = ref(0)
+const navBarPx = ref(0)
+const hasNavBar = ref(false)
+const isNativeIos = ref(false)
 const baseInnerHeight = ref(0)
+const isIosSafari = (() => {
+  if (typeof window === 'undefined') return false
+  const ua = window.navigator.userAgent
+  const isIOS =
+      /iP(hone|od|ad)/.test(ua) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+  const isSafari =
+      /Safari/.test(ua) && !/Chrome|CriOS|FxiOS|EdgiOS|OPiOS/.test(ua)
+  return isIOS && isSafari
+})()
 const IME_BAR_HEIGHT = 60
 const EXTRA_KEYBOARD_OFFSET = 150
+let keyboardRafId = 0
+let keyboardAnimationEnabled = true
+let androidKeyboardDriven = false
+let composerResizeObserver: ResizeObserver | null = null
+let lastKeyboardShift = 0
+
+const getComposerElement = () => {
+  return (composerRef.value?.$el || composerRef.value) as HTMLElement | undefined
+}
+const updateComposerHeight = () => {
+  const el = getComposerElement()
+  if (!el) return
+  composerHeight.value = el.offsetHeight
+}
+
+const keyboardShiftPx = computed(() => {
+  if (isNativeIos.value || isIosSafari) {
+    return 0
+  }
+  const base = keyboardOffsetPx.value
+  // Only add the nav bar when present so gesture-only devices stay at the base shift.
+  return hasNavBar.value ? base - (navBarPx.value) : base
+})
+
+const contentStyle = computed(() => {
+  const offset = Math.max(0, composerHeight.value + keyboardShiftPx.value)
+  return {
+    paddingBottom: `${offset}px`
+  }
+})
+
+const composerStyle = computed(() => {
+  return {
+    transform: `translateY(-${keyboardShiftPx.value}px)`
+  }
+})
+
+const setKeyboardTarget = (heightPx: number) => {
+  const next = Number(heightPx)
+  if (!Number.isFinite(next)) return
+  keyboardTargetPx.value = Math.max(0, next)
+  if (!keyboardAnimationEnabled) return
+  startKeyboardAnimation()
+}
+
+const startKeyboardAnimation = () => {
+  if (typeof window === 'undefined') {
+    keyboardOffsetPx.value = keyboardTargetPx.value
+    return
+  }
+  if (keyboardRafId) return
+  const step = () => {
+    const current = keyboardOffsetPx.value
+    const target = keyboardTargetPx.value
+    const delta = target - current
+    if (Math.abs(delta) < 1) {
+      keyboardOffsetPx.value = target
+      lastKeyboardShift = keyboardShiftPx.value
+      keyboardRafId = 0
+      return
+    }
+    keyboardOffsetPx.value = current + delta * 0.2
+    const nextShift = keyboardShiftPx.value
+    const shiftDelta = nextShift - lastKeyboardShift
+    lastKeyboardShift = nextShift
+    if (shiftDelta !== 0 && scrollDiv.value?.wrapRef) {
+      // Keep the viewport aligned with keyboard shifts even when not at bottom.
+      const nextTop = Math.max(0, scrollDiv.value.wrapRef.scrollTop + shiftDelta)
+      scrollDiv.value.wrapRef.scrollTop = nextTop
+    }
+    keyboardRafId = requestAnimationFrame(step)
+  }
+  keyboardRafId = requestAnimationFrame(step)
+}
 
 const updateKeyboardOffset = () => {
   if (typeof window === 'undefined') return
+  if (isNativeIos.value || isIosSafari) return
+  if (androidKeyboardDriven) return
   const viewport = window.visualViewport
   let offset = 0
   if (viewport) {
     offset = Math.max(0, window.innerHeight - (viewport.height + viewport.offsetTop))
   }
-  if (baseInnerHeight.value) {
-    offset = Math.max(offset, baseInnerHeight.value - window.innerHeight)
+  if (!offset && baseInnerHeight.value) {
+    offset = Math.max(0, baseInnerHeight.value - window.innerHeight)
   }
   const adjustedOffset = Math.max(0, offset - IME_BAR_HEIGHT - EXTRA_KEYBOARD_OFFSET)
-  keyboardOffset.value = adjustedOffset
-  if (adjustedOffset > 0 && scorll.value) {
-    nextTick(() => {
-      if (scrollDiv.value) {
-        setScrollBottom()
-      }
-    })
+  setKeyboardTarget(adjustedOffset)
+}
+
+const handleAndroidKeyboardHeight = (heightPx: number) => {
+  if (isNativeIos.value || isIosSafari) return
+  androidKeyboardDriven = true
+  setKeyboardTarget(heightPx)
+}
+
+type NativeInsetsPayload = {
+  platform?: 'android' | 'ios'
+  ime: number
+  visibleIme: boolean
+  navBar?: number
+  hasNavBar?: boolean
+  statusBar?: number
+}
+
+const handleNativeInsets = (payload: NativeInsetsPayload) => {
+  if (!payload) return
+  if (payload.platform === 'ios') {
+    isNativeIos.value = true
+    androidKeyboardDriven = false
+    navBarPx.value = 0
+    hasNavBar.value = false
+    setKeyboardTarget(0)
+    keyboardOffsetPx.value = 0
+    return
   }
+  if (isNativeIos.value) {
+    return
+  }
+  isNativeIos.value = false
+  navBarPx.value = payload.navBar || 0
+  hasNavBar.value = !!payload.hasNavBar
+  androidKeyboardDriven = true
+  const imeHeight = payload.visibleIme ? payload.ime || 0 : 0
+  setKeyboardTarget(imeHeight)
 }
 watch(
     () => props.chatId,
@@ -324,6 +449,7 @@ const errorWrite = (chat: any, message?: string) => {
 
 function chatMessage(chat?: any, problem?: string, re_chat?: boolean, other_params_data?: any) {
   loading.value = true
+  const hideProblemText = !!other_params_data?.hide_problem_text
   if (!chat) {
     chat = reactive({
       id: randomId(),
@@ -339,6 +465,7 @@ function chatMessage(chat?: any, problem?: string, re_chat?: boolean, other_para
       chat_id: '',
       vote_status: '-1',
       status: undefined,
+      hide_problem_text: hideProblemText,
       upload_meta: {
         image_list:
             other_params_data && other_params_data.image_list ? other_params_data.image_list : [],
@@ -368,10 +495,11 @@ function chatMessage(chat?: any, problem?: string, re_chat?: boolean, other_para
       errorWrite(chat)
     })
   } else {
+    const {hide_problem_text: _hide_problem_text, ...payload} = other_params_data || {}
     const obj = {
       message: chat.problem_text,
       re_chat: re_chat || false,
-      ...other_params_data,
+      ...payload,
       form_data: {
         ...form_data.value,
         ...api_form_data.value
@@ -485,7 +613,21 @@ onMounted(() => {
   window.sendMessage = sendMessage
   if (typeof window !== 'undefined') {
     baseInnerHeight.value = window.innerHeight
+    ;(window as any).__onAndroidKeyboardHeight = handleAndroidKeyboardHeight
+    ;(window as any).__onNativeInsets = handleNativeInsets
   }
+  nextTick(() => {
+    updateComposerHeight()
+    if (typeof ResizeObserver !== 'undefined') {
+      const el = getComposerElement()
+      if (el) {
+        composerResizeObserver = new ResizeObserver(() => {
+          updateComposerHeight()
+        })
+        composerResizeObserver.observe(el)
+      }
+    }
+  })
   updateKeyboardOffset()
   if (typeof window !== 'undefined') {
     if (window.visualViewport) {
@@ -504,12 +646,56 @@ onBeforeUnmount(() => {
       window.visualViewport.removeEventListener('scroll', updateKeyboardOffset)
     }
     window.removeEventListener('resize', updateKeyboardOffset)
+    if (keyboardRafId) {
+      cancelAnimationFrame(keyboardRafId)
+      keyboardRafId = 0
+    }
+    const win = window as any
+    if (win.__onAndroidKeyboardHeight === handleAndroidKeyboardHeight) {
+      delete win.__onAndroidKeyboardHeight
+    }
+    if (win.__onNativeInsets === handleNativeInsets) {
+      delete win.__onNativeInsets
+    }
+  }
+  if (composerResizeObserver) {
+    composerResizeObserver.disconnect()
+    composerResizeObserver = null
   }
 })
 
 function setScrollBottom() {
   // 将滚动条滚动到最下面
   scrollDiv.value.setScrollTop(getMaxHeight())
+}
+
+const handleInputFocus = () => {
+  if (isNativeIos.value || isIosSafari) {
+    nextTick(() => {
+      if (scrollDiv.value) {
+        setScrollBottom()
+      }
+    })
+    return
+  }
+  keyboardAnimationEnabled = false
+  if (keyboardRafId) {
+    cancelAnimationFrame(keyboardRafId)
+    keyboardRafId = 0
+  }
+  nextTick(() => {
+    if (scrollDiv.value) {
+      setScrollBottom()
+    }
+    lastKeyboardShift = keyboardShiftPx.value
+    keyboardAnimationEnabled = true
+    startKeyboardAnimation()
+  })
+}
+const handleInputBlur = () => {
+  if (isNativeIos.value || isIosSafari) {
+    return
+  }
 }
 
 watch(

@@ -45,6 +45,25 @@ config({
   }
 })
 
+const setViewportHeightVar = () => {
+  if (typeof window === 'undefined') return
+  const viewport = window.visualViewport
+  const height = viewport ? viewport.height : window.innerHeight
+  document.documentElement.style.setProperty('--app-viewport-height', `${height}px`)
+}
+
+if (typeof window !== 'undefined') {
+  setViewportHeightVar()
+  const handleViewportResize = () => {
+    setViewportHeightVar()
+  }
+  window.addEventListener('resize', handleViewportResize)
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', handleViewportResize)
+    window.visualViewport.addEventListener('scroll', handleViewportResize)
+  }
+}
+
 const app = createApp(App)
 app.use(store)
 app.use(directives)

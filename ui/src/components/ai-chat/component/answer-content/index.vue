@@ -53,7 +53,7 @@
         </el-card>
       </div>
     </template>
-    <div class="content">
+    <div class="content" v-if="type !== 'ai-chat'">
       <OperationButton
         :type="type"
         :application="application"

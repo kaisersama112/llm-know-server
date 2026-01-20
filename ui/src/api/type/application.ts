@@ -67,6 +67,7 @@ interface chatType {
   vote_status: string
   status?: number
   execution_details: any[]
+  hide_problem_text?: boolean
   upload_meta?: {
     document_list: Array<any>
     image_list: Array<any>

@@ -122,6 +122,8 @@
             type="textarea"
             :maxlength="100000"
             @keydown.enter="sendChatHandle($event)"
+            @focus="handleInputFocus"
+            @blur="handleInputBlur"
         />
 
         <div class="operate flex align-center">
@@ -251,7 +253,7 @@ const props = withDefaults(
       available: true
     }
 )
-const emit = defineEmits(['update:chatId', 'update:loading'])
+const emit = defineEmits(['update:chatId', 'update:loading', 'focus', 'blur'])
 const chartOpenId = ref<string>()
 const chatId_context = computed({
   get: () => {
@@ -273,6 +275,12 @@ const localLoading = computed({
     emit('update:loading', v)
   }
 })
+const handleInputFocus = () => {
+  emit('focus')
+}
+const handleInputBlur = () => {
+  emit('blur')
+}
 
 const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp']
 const documentExtensions = ['pdf', 'docx', 'txt', 'xls', 'xlsx', 'md', 'html', 'csv']
@@ -347,6 +355,7 @@ const uploadFile = async (file: any, fileList: any) => {
     uploadVideoList.value.push(file)
   } else if (audioExtensions.includes(extension)) {
     uploadAudioList.value.push(file)
+    voiceTextBuffer.value = ''
   }
 
   if (!chatId_context.value) {
@@ -413,11 +422,18 @@ const uploadAudioList = ref<Array<any>>([])
 const mediaRecorderStatus = ref(true)
 const showDelete = ref('')
 const uploadTooltipRef = ref()
+const voiceTextBuffer = ref('')
 
 // 定义响应式引用
 const mediaRecorder = ref<any>(null)
+const getMessageText = () => inputValue.value.trim() || voiceTextBuffer.value.trim()
+const hasMessage = computed(() => !!getMessageText())
 const isDisabledChart = computed(
-    () => !(inputValue.value.trim() && (props.appId || props.applicationDetails?.name))
+    () =>
+        !(
+            hasMessage.value &&
+            (props.appId || props.applicationDetails?.name)
+        )
 )
 
 // 开始录音
@@ -426,6 +442,7 @@ const startRecording = async () => {
     // 取消录音控制台日志
     Recorder.CLog = function () {
     }
+    voiceTextBuffer.value = ''
     mediaRecorderStatus.value = false
     handleTimeChange()
     mediaRecorder.value = new Recorder({
@@ -467,18 +484,15 @@ const startRecording = async () => {
 
 // 停止录音
 const stopRecording = () => {
+  const durationSeconds = recorderTime.value
   startRecorderTime.value = false
   recorderTime.value = 0
   if (mediaRecorder.value) {
     mediaRecorderStatus.value = true
     mediaRecorder.value.stop(
         (blob: Blob, duration: number) => {
-          // 测试blob是否能正常播放
-          //  const link = document.createElement('a')
-          //  link.href = window.URL.createObjectURL(blob)
-          //  link.download = 'abc.mp3'
-          //  link.click()
-          uploadRecording(blob) // 上传录音文件
+          const normalizedDuration = normalizeDuration(duration, durationSeconds)
+          uploadRecording(blob, normalizedDuration)
         },
         (err: any) => {
           console.error(`${t('chat.tip.recorderError')}:`, err)
@@ -487,32 +501,98 @@ const stopRecording = () => {
   }
 }
 
+const normalizeDuration = (rawDuration: number, fallbackSeconds: number) => {
+  if (Number.isFinite(rawDuration)) {
+    if (rawDuration > 1000) {
+      return Math.round(rawDuration / 1000)
+    }
+    if (rawDuration > 0) {
+      return Math.round(rawDuration)
+    }
+  }
+  return fallbackSeconds
+}
+
+const transcribeRecording = async (audioBlob: Blob) => {
+  const formData = new FormData()
+  formData.append('file', audioBlob, 'recording.mp3')
+  const response = await applicationApi.postSpeechToText(
+      props.applicationDetails.id as string,
+      formData,
+      localLoading
+  )
+  if (typeof response.data === 'string') {
+    return response.data.trim()
+  }
+  return ''
+}
+
 // 上传录音文件
-const uploadRecording = async (audioBlob: Blob) => {
+const uploadRecording = async (audioBlob: Blob, durationSeconds: number) => {
   try {
     recorderLoading.value = true
+    let voiceText = ''
+    try {
+      voiceText = await transcribeRecording(audioBlob)
+    } catch (error) {
+      console.error(`${t('chat.uploadFile.errorMessage')}:`, error)
+    }
+    voiceTextBuffer.value = voiceText
+    const {maxFiles, fileLimit} = props.applicationDetails.file_upload_setting
+    const currentCount =
+        uploadImageList.value.length +
+        uploadDocumentList.value.length +
+        uploadAudioList.value.length +
+        uploadVideoList.value.length
+    if (currentCount >= maxFiles) {
+      MsgWarning(t('chat.uploadFile.limitMessage1') + maxFiles + t('chat.uploadFile.limitMessage2'))
+      return
+    }
+    if (audioBlob.size > fileLimit * 1024 * 1024) {
+      MsgWarning(t('chat.uploadFile.sizeLimit') + fileLimit + 'MB')
+      return
+    }
+    if (!chatId_context.value) {
+      const res = await props.openChatId()
+      chatId_context.value = res
+    }
+    const fileName = `recording-${Date.now()}.mp3`
     const formData = new FormData()
-    formData.append('file', audioBlob, 'recording.mp3')
-    applicationApi
-        .postSpeechToText(props.applicationDetails.id as string, formData, localLoading)
-        .then((response) => {
-          recorderLoading.value = false
-          mediaRecorder.value.close()
-          inputValue.value = typeof response.data === 'string' ? response.data : ''
-          // 自动发送
-          if (props.applicationDetails.stt_autosend) {
-            nextTick(() => {
-              autoSendMessage()
-            })
-          }
-        })
-        .catch((error) => {
-          recorderLoading.value = false
-          console.error(`${t('chat.uploadFile.errorMessage')}:`, error)
-        })
+    formData.append('file', audioBlob, fileName)
+    if (props.type === 'debug-ai-chat') {
+      formData.append('debug', 'true')
+    } else {
+      formData.append('debug', 'false')
+    }
+    const response = await applicationApi.uploadFile(
+        props.applicationDetails.id as string,
+        chatId_context.value as string,
+        formData,
+        localLoading
+    )
+    const uploadedList = Array.isArray(response.data) ? response.data : []
+    const uploaded = uploadedList.find((file: any) => file.name === fileName) || uploadedList[0]
+    const hasUploaded = !!uploaded?.url
+    if (hasUploaded) {
+      uploadAudioList.value.push({
+        name: uploaded.name || fileName,
+        url: uploaded.url,
+        file_id: uploaded.file_id,
+        duration: Math.max(1, Math.round(durationSeconds))
+      })
+    }
+    if (props.applicationDetails.stt_autosend && hasUploaded && voiceTextBuffer.value) {
+      nextTick(() => {
+        autoSendMessage()
+      })
+    }
   } catch (error) {
-    recorderLoading.value = false
     console.error(`${t('chat.uploadFile.errorMessage')}:`, error)
+  } finally {
+    recorderLoading.value = false
+    if (mediaRecorder.value) {
+      mediaRecorder.value.close()
+    }
   }
 }
 const handleTimeChange = () => {
@@ -533,13 +613,20 @@ const handleTimeChange = () => {
 }
 
 function autoSendMessage() {
-  props.sendMessage(inputValue.value, {
+  const messageText = getMessageText()
+  if (!messageText) {
+    return
+  }
+  const hideProblemText = !inputValue.value.trim() && !!voiceTextBuffer.value && uploadAudioList.value.length > 0
+  props.sendMessage(messageText, {
     image_list: uploadImageList.value,
     document_list: uploadDocumentList.value,
     audio_list: uploadAudioList.value,
-    video_list: uploadVideoList.value
+    video_list: uploadVideoList.value,
+    hide_problem_text: hideProblemText
   })
   inputValue.value = ''
+  voiceTextBuffer.value = ''
   uploadImageList.value = []
   uploadDocumentList.value = []
   uploadAudioList.value = []
@@ -552,7 +639,7 @@ function sendChatHandle(event?: any) {
     // 如果没有按下组合键ctrl，则会阻止默认事件
     event?.preventDefault()
     if (!isDisabledChart.value && !props.loading && !event?.isComposing) {
-      if (inputValue.value.trim()) {
+      if (hasMessage.value) {
         autoSendMessage()
       }
     }
@@ -571,6 +658,9 @@ function deleteFile(index: number, val: string) {
     uploadVideoList.value.splice(index, 1)
   } else if (val === 'audio') {
     uploadAudioList.value.splice(index, 1)
+    if (uploadAudioList.value.length === 0) {
+      voiceTextBuffer.value = ''
+    }
   }
 }
 

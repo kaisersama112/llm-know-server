@@ -328,7 +328,7 @@ onMounted(() => {
   }
   &__main {
     padding-top: calc(var(--app-header-height) + 24px);
-    height: calc(100vh - var(--app-header-height) - 24px);
+    height: calc(var(--app-viewport-height, 100vh) - var(--app-header-height) - 24px);
     overflow: hidden;
   }
   .new-chat-button {
